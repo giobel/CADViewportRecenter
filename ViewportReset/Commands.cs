@@ -33,11 +33,16 @@ namespace AttributeUpdater
             // of how the processing is going
             int processed = 0, saved = 0, problem = 0;
 
+            var dict = File.ReadLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToDictionary(line => line[0], line => line.ToList());
+
             foreach (string fileName in fileNames)
             {
                 if (fileName.EndsWith(".dwg",StringComparison.CurrentCultureIgnoreCase))
                 {
-                    string outputName =fileName.Substring(0,fileName.Length - 4) +"_updated.dwg";
+                    FileInfo fi = new FileInfo(fileName);
+
+                    string name = fi.Name.Substring(0,fi.Name.Length-4);
+                    string outputName = fileName.Substring(0, fileName.Length - 4) + "_updated.dwg";
 
                     Database db = new Database(false, false);
                     using (db)
@@ -56,6 +61,7 @@ namespace AttributeUpdater
                             //  );
 
                             
+
                             using (Transaction trans = db.TransactionManager.StartTransaction())
                             {
                                 LayoutManager lm = LayoutManager.Current;
@@ -78,14 +84,16 @@ namespace AttributeUpdater
                                 {
                                     Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
-                                    
+                                    Point3d revitPoint = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(new Point3d(381,285,0))<10)
+                                    Point3d revitPointWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
+
+                                    if (VP != null && VP.CenterPoint.DistanceTo(revitPoint)<10)
                                     {
                                         VP.UpgradeOpen();
-                                        VP.Erase();
+                                        //VP.Erase();
 
-                                        //TwistViewport(VP.Id,new Point3d(75045.0075828448, 13265.0382509219, 0), DegToRad(-36));
+                                        TwistViewport(VP.Id,revitPointWCS, DegToRad(double.Parse(dict[name][4])));
                                     }
                                 }
 
