@@ -12,14 +12,14 @@ namespace AttributeUpdater
 {
     public class Commands
     {
-        [CommandMethod("UAIF")]
+        [CommandMethod("TRISTAN")]
         public void UpdateAttributeInFiles()
         {
-            Document doc =
-              Application.DocumentManager.MdiActiveDocument;
+            Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
-            // Have the user choose the block and attribute
-            // names, and the new attribute value
+
+            
+            // User should input the folder where the dwgs are saved
             PromptResult pr =ed.GetString("\nEnter folder containing DWGs to process: ");
 
             if (pr.Status != PromptStatus.OK)
@@ -53,19 +53,46 @@ namespace AttributeUpdater
 
                             db.ReadDwgFile(fileName,FileShare.ReadWrite,false,"");
 
-                            //int attributesChanged = UpdateAttributesInDatabase(
-                            //    db,
-                            //    blockName,
-                            //    attbName,
-                            //    attbValue
-                            //  );
+                            LayoutManager lm = LayoutManager.Current;
 
-                            
+                            lm.CurrentLayout = "Model";
 
                             using (Transaction trans = db.TransactionManager.StartTransaction())
                             {
-                                LayoutManager lm = LayoutManager.Current;
+                                //Attch Xref
+                                string PathName = $"{pathName}\\{dict[name][8]}";
+                                ObjectId acXrefId = db.AttachXref(PathName, dict[name][8]);
+
                                 
+
+                                if (!acXrefId.IsNull)
+                                {
+                                    // Attach the DWG reference to the current space
+                                    Point3d insPt = new Point3d(0, 0, 0);
+                                    using (BlockReference acBlkRef = new BlockReference(insPt, acXrefId))
+                                    {
+                                        BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                                        BlockTableRecord modelSpace = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                                        modelSpace.AppendEntity(acBlkRef);
+
+                                        //BlockTableRecord acBlkTblRec;
+                                        //acBlkTblRec = trans.GetObject(db.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                        //acBlkTblRec.AppendEntity(acBlkRef);
+
+                                        trans.AddNewlyCreatedDBObject(acBlkRef, true);
+
+                                        
+                                    }
+                                }
+
+                                using (ObjectIdCollection acXrefIdCol = new ObjectIdCollection())
+                                {
+                                    acXrefIdCol.Add(acXrefId);
+
+                                    db.BindXrefs(acXrefIdCol, false);
+                                }
+
+
                                 lm.CurrentLayout = "Layout1";
 
                                 //forms.MessageBox.Show(lm.CurrentLayout);
