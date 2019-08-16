@@ -111,18 +111,32 @@ namespace AttributeUpdater
                                 {
                                     Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
+
                                     Point3d revitPoint = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
 
                                     Point3d revitPointWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(revitPoint)<10)
+                                    if (VP != null && VP.CenterPoint.DistanceTo(revitPoint)<50)  //Should use the closest viewport, not a fixed distance!
                                     {
                                         VP.UpgradeOpen();
+                                        double cs = VP.CustomScale; //save the original scale as it changes when we change viewport width and height
+                                        VP.CenterPoint = revitPoint; //move the viewport to the revit location
+                                        VP.Width = 790; //set the width to match the revit width
+                                        VP.Height = 490; //idem
+                                        VP.CustomScale = cs;
                                         //VP.Erase();
 
                                         TwistViewport(VP.Id,revitPointWCS, DegToRad(double.Parse(dict[name][4])));
+
+                                
                                     }
                                 }
+
+                                //ed.Command("_.ZOOM", "_E");
+
+                                //ed.Command("_.ZOOM", ".7X");
+
+                                //ed.Regen();
 
                                 trans.Commit();
                             }

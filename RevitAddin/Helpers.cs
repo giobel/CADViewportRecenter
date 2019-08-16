@@ -23,10 +23,10 @@ namespace RevitAddin
             {
                 t.Start();
 
-                //Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
+                Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
                 //				Line L2 = Line.CreateBound(max0, (min0+max0)/2);
 
-                //doc.Create.NewDetailCurve(vs,L1);
+                doc.Create.NewDetailCurve(vs,L1);
                 //doc.Create.NewDetailCurve(vs,L2);
 
 
@@ -68,7 +68,7 @@ namespace RevitAddin
             string ptY = Convert.ToInt32(UnitUtils.ConvertFromInternalUnits(point.Y, DisplayUnitType.DUT_MILLIMETERS)).ToString();
             string ptZ = Convert.ToInt32(UnitUtils.ConvertFromInternalUnits(point.Z, DisplayUnitType.DUT_MILLIMETERS)).ToString();
 
-            return String.Format("{0},{1},{2}", ptX, ptY, ptZ);
+            return String.Format("{0},{1},0", ptX, ptY);
         }
 
         public static XYZ PointFlatten(XYZ point)

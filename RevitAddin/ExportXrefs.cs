@@ -69,6 +69,7 @@ namespace RevitAddin
                         ICollection<ElementId> viewportIds = vs.GetAllViewports();
 
                         Viewport vp = null;
+                        View vpPlan = null;
 
                         foreach (ElementId eid in viewportIds)
                         {
@@ -78,10 +79,9 @@ namespace RevitAddin
                             if (view.ViewType== ViewType.FloorPlan)
                             {
                                 vp = vport;
+                                vpPlan = view;
                             }
                         }
-
-                        Autodesk.Revit.DB.View vpPlan = doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
 
                         //Centrepoint of View
                         BoundingBoxXYZ viewBBox = vpPlan.get_BoundingBox(vpPlan);
