@@ -20,10 +20,10 @@ namespace RevitAddin
                 a.CreateRibbonTab("Metro");
 
                 RibbonPanel tools = a.CreateRibbonPanel("Metro", "Tools");
+                
+                AddPushButton(tools, "btnExportSheets", "Export Sheets", "", "pack://application:,,,/RevitAddin;component/Images/sheets.png", "RevitAddin.ExportSheets", "Export selected sheets to dwg. View plan elements will be temporarily hidden (atm it only processes 1 plan view per sheet).");
 
-                AddPushButton(tools, "btnTristan", "Tristan", "", "pack://application:,,,/RevitAddin;component/Images/tristan.png", "RevitAddin.Command", "Export selected sheets to dwg and create the csv summary");
-
-                AddPushButton(tools, "btnTristan", "Tristan", "", "pack://application:,,,/RevitAddin;component/Images/tristan.png", "RevitAddin.Command", "Export selected sheets to dwg and create the csv summary");
+                AddPushButton(tools, "btnTristan", "Export Xrefs+CSV", "", "pack://application:,,,/RevitAddin;component/Images/xref.png", "RevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
 
                 return Result.Succeeded;
             }

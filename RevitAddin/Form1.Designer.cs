@@ -128,7 +128,7 @@
             this.textBoxExportSettings.Name = "textBoxExportSettings";
             this.textBoxExportSettings.Size = new System.Drawing.Size(354, 20);
             this.textBoxExportSettings.TabIndex = 9;
-            this.textBoxExportSettings.Text = "Metrolinx Sheet Export";
+            this.textBoxExportSettings.Text = "Metrolinx Sheet Export Xref";
             // 
             // Form1
             // 

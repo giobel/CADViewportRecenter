@@ -35,6 +35,8 @@ namespace AttributeUpdater
 
             var dict = File.ReadLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToDictionary(line => line[0], line => line.ToList());
 
+            dict.Remove(dict.Keys.First()); //remove the csv header
+
             foreach (string fileName in fileNames)
             {
                 if (fileName.EndsWith(".dwg",StringComparison.CurrentCultureIgnoreCase))
@@ -60,8 +62,8 @@ namespace AttributeUpdater
                             using (Transaction trans = db.TransactionManager.StartTransaction())
                             {
                                 //Attch Xref
-                                string PathName = $"{pathName}\\{dict[name][8]}";
-                                ObjectId acXrefId = db.AttachXref(PathName, dict[name][8]);
+                                string PathName = $"{pathName}\\{dict[name][10]}";
+                                ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
 
                                 
 
@@ -112,21 +114,21 @@ namespace AttributeUpdater
                                     Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
 
-                                    Point3d revitPoint = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
+                                    Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0); 
 
-                                    Point3d revitPointWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
+                                    Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(revitPoint)<50)  //Should use the closest viewport, not a fixed distance!
+                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre)<50)  //Should use the closest viewport, not a fixed distance!
                                     {
                                         VP.UpgradeOpen();
                                         double cs = VP.CustomScale; //save the original scale as it changes when we change viewport width and height
-                                        VP.CenterPoint = revitPoint; //move the viewport to the revit location
-                                        VP.Width = 790; //set the width to match the revit width
-                                        VP.Height = 490; //idem
+                                        VP.CenterPoint = revitViewportCentre; //move the viewport to the revit location
+                                        VP.Width = double.Parse(dict[name][8]); //set the width to match the revit width
+                                        VP.Height = double.Parse(dict[name][9]); //idem
                                         VP.CustomScale = cs;
                                         //VP.Erase();
 
-                                        TwistViewport(VP.Id,revitPointWCS, DegToRad(double.Parse(dict[name][4])));
+                                        TwistViewport(VP.Id,revitViewCentreWCS, DegToRad(double.Parse(dict[name][4])));
 
                                 
                                     }

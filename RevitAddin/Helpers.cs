@@ -23,10 +23,10 @@ namespace RevitAddin
             {
                 t.Start();
 
-                Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
+                //Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
                 //				Line L2 = Line.CreateBound(max0, (min0+max0)/2);
 
-                doc.Create.NewDetailCurve(vs,L1);
+                //doc.Create.NewDetailCurve(vs,L1);
                 //doc.Create.NewDetailCurve(vs,L2);
 
 
@@ -77,6 +77,26 @@ namespace RevitAddin
             return new XYZ(point.X, point.Y, 0);
         }
 
-        
+        public static XYZ GetCentroid(List<XYZ> nodes, int count)
+        {
+            double x = 0, y = 0, area = 0, k;
+            XYZ a, b = nodes[count - 1];
+
+            for (int i = 0; i < count; i++)
+            {
+                a = nodes[i];
+
+                k = a.Y * b.X - a.X * b.Y;
+                area += k;
+                x += (a.X + b.X) * k;
+                y += (a.Y + b.Y) * k;
+
+                b = a;
+            }
+            area *= 3;
+
+            return (area == 0) ? XYZ.Zero : new XYZ(x /= area, y /= area, 0);
+        }
+
     }
 }

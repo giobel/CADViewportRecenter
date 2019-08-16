@@ -73,7 +73,7 @@ namespace RevitAddin
 
                                 t.Start("Hide elements");
 
-                                if (planView.ViewType == ViewType.FloorPlan)
+                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan)
                                 {
                                     fec = new FilteredElementCollector(doc, views.First())
                                                                                 .WhereElementIsNotElementType()

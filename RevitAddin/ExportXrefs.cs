@@ -7,6 +7,7 @@ using System.Text;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using winForm = System.Windows.Forms;
 
@@ -28,6 +29,22 @@ namespace RevitAddin
             Document doc = uidoc.Document;
 
             StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
+                        "Sheet Number",
+                        "View Centre WCS-X",
+                        "View Centre WCS-Y",
+                        "View Centre WCS-Z",
+                        "Angle to North",
+                        "Viewport Centre-X",
+                        "Viewport Centre-Y",
+                        "Viewport Centre-Z",
+                        "Viewport Width",
+                        "Viewport Height",
+                        "Xref name"
+                       )
+                       );
+
             string outputFile = "summary.csv";
 
             ProjectLocation pl = doc.ActiveProjectLocation;
@@ -74,19 +91,57 @@ namespace RevitAddin
                         foreach (ElementId eid in viewportIds)
                         {
                             Viewport vport = doc.GetElement(eid) as Viewport;
-                            View view = doc.GetElement(vport.ViewId) as View;
+                            View planView = doc.GetElement(vport.ViewId) as View;
 
-                            if (view.ViewType== ViewType.FloorPlan)
+                            if (planView.ViewType== ViewType.FloorPlan || planView.ViewType==ViewType.EngineeringPlan)
                             {
                                 vp = vport;
-                                vpPlan = view;
+                                vpPlan = planView;
                             }
                         }
 
-                        //Centrepoint of View
-                        BoundingBoxXYZ viewBBox = vpPlan.get_BoundingBox(vpPlan);
-                        XYZ viewCentre = Helpers.BBoxCenter(viewBBox, doc, vs); // per Project Base Point
-                        XYZ viewCentreWCS = ttr.OfPoint(viewCentre);    // per Survey Point
+                        ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
+
+                        IList<CurveLoop> cloop = vcr.GetCropShape();
+
+                        double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(cloop);
+
+                        
+
+                        double left = vcr.LeftAnnotationCropOffset * vpPlan.Scale / 304.8;
+                        double right = vcr.RightAnnotationCropOffset * vpPlan.Scale / 304.8;
+                        double top = vcr.TopAnnotationCropOffset * vpPlan.Scale / 304.8;
+                        double bottom = vcr.BottomAnnotationCropOffset * vpPlan.Scale / 304.8;
+
+
+                        List<Curve> crvs = new List<Curve>();
+
+                        List<XYZ> pts = new List<XYZ>();
+
+                        foreach (Curve crv in cloop.First())
+                        {
+
+                            crvs.Add(crv);
+                            pts.Add(crv.GetEndPoint(0));
+                            pts.Add(crv.GetEndPoint(1));
+
+                            //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
+                        }
+
+                        XYZ centroid = Helpers.GetCentroid(pts, pts.Count);
+                        XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
+
+                        //Viewport outline width and height to be used to update the autocad viewport
+                        XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
+                        XYZ minPt = vp.GetBoxOutline().MinimumPoint;
+
+                        int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
+                        int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
+
+                        ////Centrepoint of View
+                        //BoundingBoxXYZ viewBBox = vpPlan.get_BoundingBox(vpPlan);
+                        //XYZ viewCentre = Helpers.BBoxCenter(viewBBox, doc, vs); // per Project Base Point
+                        //XYZ viewCentreWCS = ttr.OfPoint(viewCentre);    // per Survey Point
 
                         //Centrepoint of Viewport on Sheet
                         BoundingBoxXYZ viewPortBBox = vp.get_BoundingBox(vs);
@@ -99,14 +154,20 @@ namespace RevitAddin
                         if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
                         {
                             TaskDialog.Show("Error", "Check that the destination folder exists or the Export Settings exists");
+                            
+                        }
+                        else
+                        {
                             counter += 1;
                         }
 
-                        sb.AppendLine(String.Format("{0},{1},{2},{3},{4}",
+                        sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
                                                 sheetNumber,
                                                 Helpers.PointToString(viewCentreWCS),
                                                 projPosition.Angle * 180 / Math.PI,
                                                 Helpers.PointToString(vpCentreOnSheet),
+                                                width.ToString(),
+                                                height.ToString(),
                                                 xrefName
                                                )
                                                );

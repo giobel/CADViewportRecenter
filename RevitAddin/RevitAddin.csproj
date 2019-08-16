@@ -47,6 +47,10 @@
       <HintPath>$(ProgramW6432)\Autodesk\Revit 2018\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RevitAPIIFC">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2018\RevitAPIIFC.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="RevitAPIUI">
       <HintPath>$(ProgramW6432)\Autodesk\Revit 2018\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
@@ -73,6 +77,8 @@
   <ItemGroup>
     <Resource Include="Images\tristan.png" />
     <Content Include="favicon.ico" />
+    <Resource Include="Images\sheets.png" />
+    <Resource Include="Images\xref.png" />
     <Content Include="RevitAddin.addin" />
   </ItemGroup>
   <ItemGroup>
