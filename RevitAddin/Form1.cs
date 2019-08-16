@@ -12,16 +12,22 @@ namespace RevitAddin
 {
     public partial class Form1 : Form
     {
-        public string tBoxSheetNumber { get; set; }
+        public string tBoxDestinationFolder { get; private set; }
+        public string tBoxExportSettings { get; private set; }
+        public string tBoxSheetNumber { get; private set; }
 
         public Form1()
         {
             InitializeComponent();
+            
         }
 
         private void ButtonOk_Click(object sender, EventArgs e)
         {
-            tBoxSheetNumber = textBox1.Text;
+            tBoxSheetNumber = textBoxSheetNumbers.Text;
+            tBoxExportSettings = textBoxExportSettings.Text;
+            tBoxDestinationFolder = textBoxFolder.Text;
+
         }
     }
 }

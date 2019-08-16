@@ -23,7 +23,7 @@ namespace RevitAddin
 
                 AddPushButton(tools, "btnTristan", "Tristan", "", "pack://application:,,,/RevitAddin;component/Images/tristan.png", "RevitAddin.Command", "Export selected sheets to dwg and create the csv summary");
 
-                
+                AddPushButton(tools, "btnTristan", "Tristan", "", "pack://application:,,,/RevitAddin;component/Images/tristan.png", "RevitAddin.Command", "Export selected sheets to dwg and create the csv summary");
 
                 return Result.Succeeded;
             }
@@ -107,3 +107,7 @@ namespace RevitAddin
         }
     }
 }
+
+
+
+ 

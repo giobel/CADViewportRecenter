@@ -36,7 +36,7 @@ namespace RevitAddin
             return (min0 + max0) / 2;
         }
 
-        public static bool ExportDWG(Document document, Autodesk.Revit.DB.View view, string setupName, string xrefName)
+        public static bool ExportDWG(Document document, Autodesk.Revit.DB.View view, string setupName, string xrefName, string folder)
         {
             bool exported = false;
             // Get the predefined setups and use the one with the given name.
@@ -52,7 +52,8 @@ namespace RevitAddin
                     ICollection<ElementId> views = new List<ElementId>();
                     views.Add(view.Id);
                     // The document has to be saved already, therefore it has a valid PathName.
-                    exported = document.Export(Path.GetDirectoryName(document.PathName), xrefName, views, dwgOptions);
+                    
+                    exported = document.Export(folder, xrefName, views, dwgOptions);
                     break;
                 }
             }
@@ -75,5 +76,7 @@ namespace RevitAddin
 
             return new XYZ(point.X, point.Y, 0);
         }
+
+        
     }
 }
