@@ -51,6 +51,20 @@ namespace RevitAddin
 
                     string exportSettings = form.tBoxExportSettings;
 
+                    DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.tBoxExportSettings);
+                    
+                    if (dwgOptions == null)
+                    {
+                        TaskDialog.Show("Error", "Export setting not found");
+                        return Result.Failed;
+                    }
+
+                    if (dwgOptions.TargetUnit != ExportUnit.Millimeter)
+                    {
+                        TaskDialog.Show("Error", "Export units not set to Millimeter. Please fix this before exporting.");
+                        return Result.Failed;
+                    }
+
                     using (TransactionGroup tranGroup = new TransactionGroup(doc))
                     {
 
@@ -91,7 +105,7 @@ namespace RevitAddin
 
                                 if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
                                 {
-                                    TaskDialog.Show("Error", "Check that the destination folder exists or the Export Settings exists");
+                                    TaskDialog.Show("Error", "Check that the destination folder exists");
                                 }
                                 else
                                 {

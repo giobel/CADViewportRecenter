@@ -7,6 +7,7 @@ using System;
 using forms = System.Windows.Forms;
 using System.Linq;
 using Autodesk.AutoCAD.Geometry;
+using System.Reflection;
 
 namespace AttributeUpdater
 {
@@ -18,9 +19,9 @@ namespace AttributeUpdater
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
 
-            
+
             // User should input the folder where the dwgs are saved
-            PromptResult pr =ed.GetString("\nEnter folder containing DWGs to process: ");
+            PromptResult pr = ed.GetString("\nEnter folder containing DWGs to process: ");
 
             if (pr.Status != PromptStatus.OK)
                 return;
@@ -39,11 +40,11 @@ namespace AttributeUpdater
 
             foreach (string fileName in fileNames)
             {
-                if (fileName.EndsWith(".dwg",StringComparison.CurrentCultureIgnoreCase))
+                if (fileName.EndsWith(".dwg", StringComparison.CurrentCultureIgnoreCase))
                 {
                     FileInfo fi = new FileInfo(fileName);
 
-                    string name = fi.Name.Substring(0,fi.Name.Length-4);
+                    string name = fi.Name.Substring(0, fi.Name.Length - 4);
                     string outputName = fileName.Substring(0, fileName.Length - 4) + "_updated.dwg";
 
                     Database db = new Database(false, false);
@@ -53,7 +54,7 @@ namespace AttributeUpdater
                         {
                             ed.WriteMessage("\n\nProcessing file: " + fileName);
 
-                            db.ReadDwgFile(fileName,FileShare.ReadWrite,false,"");
+                            db.ReadDwgFile(fileName, FileShare.ReadWrite, false, "");
 
                             LayoutManager lm = LayoutManager.Current;
 
@@ -65,8 +66,6 @@ namespace AttributeUpdater
                                 string PathName = $"{pathName}\\{dict[name][10]}";
                                 ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
 
-                                
-
                                 if (!acXrefId.IsNull)
                                 {
                                     // Attach the DWG reference to the current space
@@ -77,23 +76,9 @@ namespace AttributeUpdater
                                         BlockTableRecord modelSpace = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                                         modelSpace.AppendEntity(acBlkRef);
 
-                                        //BlockTableRecord acBlkTblRec;
-                                        //acBlkTblRec = trans.GetObject(db.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                        //acBlkTblRec.AppendEntity(acBlkRef);
-
                                         trans.AddNewlyCreatedDBObject(acBlkRef, true);
-
-                                        
                                     }
                                 }
-
-                                using (ObjectIdCollection acXrefIdCol = new ObjectIdCollection())
-                                {
-                                    acXrefIdCol.Add(acXrefId);
-
-                                    db.BindXrefs(acXrefIdCol, false);
-                                }
-
 
                                 lm.CurrentLayout = "Layout1";
 
@@ -105,20 +90,17 @@ namespace AttributeUpdater
 
                                 Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
 
-
-
-                                //BlockTableRecord BlkTblRec = trans.GetObject(CurrentLo.BlockTableRecordId, OpenMode.ForRead) as BlockTableRecord;
+                                
 
                                 foreach (ObjectId ID in CurrentLo.GetViewports())
                                 {
                                     Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
-
-                                    Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0); 
+                                    Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
 
                                     Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre)<100)  //Should use the closest viewport, not a fixed distance!
+                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
                                     {
                                         VP.UpgradeOpen();
                                         double cs = VP.CustomScale; //save the original scale as it changes when we change viewport width and height
@@ -128,32 +110,26 @@ namespace AttributeUpdater
                                         VP.CustomScale = cs;
                                         //VP.Erase();
 
-                                        TwistViewport(VP.Id,revitViewCentreWCS, DegToRad(double.Parse(dict[name][4])));
-
-                                
+                                        TwistViewport(VP.Id, revitViewCentreWCS, DegToRad(double.Parse(dict[name][4])));
                                     }
                                 }
-
-                                //ed.Command("_.ZOOM", "_E");
-
-                                //ed.Command("_.ZOOM", ".7X");
-
-                                //ed.Regen();
 
                                 trans.Commit();
                             }
 
-                                ed.WriteMessage("\nSaving to file: {0}", outputName);
+                            BindXrefs(db);
 
-                                db.SaveAs(outputName,DwgVersion.Current);
+                            ed.WriteMessage("\nSaving to file: {0}", outputName);
 
-                                saved++;
-                            
+                            db.SaveAs(outputName, DwgVersion.Current);
+
+                            saved++;
+
                             processed++;
                         }
                         catch (System.Exception ex)
                         {
-                            ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"",fileName,ex.Message);
+                            ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
 
                             problem++;
                         }
@@ -171,6 +147,171 @@ namespace AttributeUpdater
         }
 
 
+        public void BindXrefs(Database db)
+
+        {
+            ObjectIdCollection xrefCollection = new ObjectIdCollection();
+
+            using (XrefGraph xg = db.GetHostDwgXrefGraph(false))
+
+            {
+                int numOfNodes = xg.NumNodes;
+
+                for (int cnt = 0; cnt < xg.NumNodes; cnt++)
+
+                {
+                    XrefGraphNode xNode = xg.GetXrefNode(cnt) as XrefGraphNode;
+
+                    if (!xNode.Database.Filename.Equals(db.Filename))
+
+                    {
+
+                        if (xNode.XrefStatus == XrefStatus.Resolved)
+
+                        {
+
+                            xrefCollection.Add(xNode.BlockTableRecordId);
+
+                        }
+
+                    }
+                }
+            }
+
+            if (xrefCollection.Count != 0)
+
+                db.BindXrefs(xrefCollection, true);
+        }
+
+        public static void zoomExtentTest()
+
+        {
+            Object acadObject = Application.AcadApplication;
+
+            acadObject.GetType().InvokeMember("ZoomExtents", BindingFlags.InvokeMethod, null, acadObject, null);
+        }
+
+        static void Zoom(Point3d pMin, Point3d pMax, Point3d pCenter, double dFactor)
+        {
+            // Get the current document and database
+            Document acDoc = Application.DocumentManager.MdiActiveDocument;
+            Database acCurDb = acDoc.Database;
+            int nCurVport = System.Convert.ToInt32(Application.GetSystemVariable("CVPORT"));
+            // Get the extents of the current space no points
+            // or only a center point is provided
+            // Check to see if Model space is current
+            if (acCurDb.TileMode == true)
+            {
+                if (pMin.Equals(new Point3d()) == true &&
+               pMax.Equals(new Point3d()) == true)
+                {
+                    pMin = acCurDb.Extmin;
+                    pMax = acCurDb.Extmax;
+                }
+            }
+            else
+            {
+                // Check to see if Paper space is current
+                if (nCurVport == 1)
+                {
+                    // Get the extents of Paper space
+                    if (pMin.Equals(new Point3d()) == true &&
+                    pMax.Equals(new Point3d()) == true)
+                    {
+                        pMin = acCurDb.Pextmin;
+                        pMax = acCurDb.Pextmax;
+                    }
+                }
+                else
+                {
+                    // Get the extents of Model space
+                    if (pMin.Equals(new Point3d()) == true &&
+                    pMax.Equals(new Point3d()) == true)
+                    {
+                        pMin = acCurDb.Extmin;
+                        pMax = acCurDb.Extmax;
+                    }
+                }
+            }
+            // Start a transaction
+            using (Transaction acTrans = acCurDb.TransactionManager.StartTransaction())
+            {
+                // Get the current view
+                using (ViewTableRecord acView = acDoc.Editor.GetCurrentView())
+                {
+                    Extents3d eExtents;
+                    // Translate WCS coordinates to DCS
+                    Matrix3d matWCS2DCS;
+                    matWCS2DCS = Matrix3d.PlaneToWorld(acView.ViewDirection);
+                    matWCS2DCS = Matrix3d.Displacement(acView.Target - Point3d.Origin) *
+                    matWCS2DCS;
+                    matWCS2DCS = Matrix3d.Rotation(-acView.ViewTwist,
+                    acView.ViewDirection,
+                    acView.Target) * matWCS2DCS;
+                    // If a center point is specified, define the min and max
+                    // point of the extents
+                    // for Center and Scale modes
+                    if (pCenter.DistanceTo(Point3d.Origin) != 0)
+                    {
+                        pMin = new Point3d(pCenter.X - (acView.Width / 2),
+                        pCenter.Y - (acView.Height / 2), 0);
+                        pMax = new Point3d((acView.Width / 2) + pCenter.X,
+                        (acView.Height / 2) + pCenter.Y, 0);
+                    }
+                    // Create an extents object using a line
+                    using (Line acLine = new Line(pMin, pMax))
+                    {
+                        eExtents = new Extents3d(acLine.Bounds.Value.MinPoint,
+                        acLine.Bounds.Value.MaxPoint);
+                    }
+                    // Calculate the ratio between the width and height of the current view
+                    double dViewRatio;
+                    dViewRatio = (acView.Width / acView.Height);
+                    // Tranform the extents of the view
+                    matWCS2DCS = matWCS2DCS.Inverse();
+                    eExtents.TransformBy(matWCS2DCS);
+                    double dWidth;
+                    double dHeight;
+                    Point2d pNewCentPt;
+                    // Check to see if a center point was provided (Center and Scale modes)
+                    if (pCenter.DistanceTo(Point3d.Origin) != 0)
+                    {
+                        dWidth = acView.Width;
+                        dHeight = acView.Height;
+                        if (dFactor == 0)
+                        {
+                            pCenter = pCenter.TransformBy(matWCS2DCS);
+                        }
+                        pNewCentPt = new Point2d(pCenter.X, pCenter.Y);
+                    }
+                    else // Working in Window, Extents and Limits mode
+                    {
+                        // Calculate the new width and height of the current view
+                        dWidth = eExtents.MaxPoint.X - eExtents.MinPoint.X;
+                        dHeight = eExtents.MaxPoint.Y - eExtents.MinPoint.Y;
+                        // Get the center of the view
+                        pNewCentPt = new Point2d(((eExtents.MaxPoint.X +
+                        eExtents.MinPoint.X) * 0.5),
+                        ((eExtents.MaxPoint.Y +
+                        eExtents.MinPoint.Y) * 0.5));
+                    }
+                    // Check to see if the new width fits in current window
+                    if (dWidth > (dHeight * dViewRatio)) dHeight = dWidth / dViewRatio;
+                    // Resize and scale the view
+                    if (dFactor != 0)
+                    {
+                        acView.Height = dHeight * dFactor;
+                        acView.Width = dWidth * dFactor;
+                    }
+                    // Set the center of the view
+                    acView.CenterPoint = pNewCentPt;
+                    // Set the current view
+                    acDoc.Editor.SetCurrentView(acView);
+                }
+                // Commit the changes
+                acTrans.Commit();
+            }
+        }
         static double DegToRad(double deg)
         {
             return deg * Math.PI / 180.0;

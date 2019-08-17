@@ -102,7 +102,9 @@ namespace RevitAddin
 
                         ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
 
-                        IList<CurveLoop> cloop = vcr.GetCropShape();
+                        IList<CurveLoop> cloop = vcr.GetCropShape(); //view crop outline
+
+                        CurveLoop annotationloop = vcr.GetAnnotationCropShape();
 
                         double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(cloop);
 
@@ -118,23 +120,38 @@ namespace RevitAddin
 
                         List<XYZ> pts = new List<XYZ>();
 
-                        foreach (Curve crv in cloop.First())
+                        ////Option 1 centroid of view crop
+                        //foreach (Curve crv in cloop.First())
+                        //{
+
+                        //    crvs.Add(crv);
+                        //    pts.Add(crv.GetEndPoint(0));
+                        //    pts.Add(crv.GetEndPoint(1));
+
+                        //    //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
+                        //}
+
+
+                        //Option 2 centroid of annotation crop
+                        foreach (Curve crv in annotationloop)
                         {
 
-                            crvs.Add(crv);
                             pts.Add(crv.GetEndPoint(0));
                             pts.Add(crv.GetEndPoint(1));
 
                             //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
                         }
 
-                        // Original - Centroid of ViewCrop
+                       
                         XYZ centroid = Helpers.GetCentroid(pts, pts.Count);
                         //XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
 
-                        //Option 1 - Centroid of Annotation Crop (Annotation crop matching Viewport boundary)
-                        XYZ centroidAnnotationCrop = new XYZ(centroid.X + (-left + right) / 2, centroid.Y + (top - bottom) / 2, 0);
-                        XYZ viewCentreWCS = ttr.OfPoint(centroidAnnotationCrop);    // per Survey Point
+                        //Option 1 - Centroid of CropShape + Annotation Crop (Annotation crop matching Viewport boundary)
+                        //XYZ centroidAnnotationCrop = new XYZ(centroid.X + (-left + right) / 2, centroid.Y + (top - bottom) / 2, 0);
+                        //XYZ viewCentreWCS = ttr.OfPoint(centroidAnnotationCrop);    // per Survey Point
+
+                        //Option 2 - Centroid of Annotation Crop Shape
+                        XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
 
                         //Viewport outline width and height to be used to update the autocad viewport
                         XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
