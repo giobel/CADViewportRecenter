@@ -118,7 +118,7 @@ namespace AttributeUpdater
 
                                     Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre)<50)  //Should use the closest viewport, not a fixed distance!
+                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre)<100)  //Should use the closest viewport, not a fixed distance!
                                     {
                                         VP.UpgradeOpen();
                                         double cs = VP.CustomScale; //save the original scale as it changes when we change viewport width and height

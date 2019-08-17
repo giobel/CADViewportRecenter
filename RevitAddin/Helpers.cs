@@ -19,19 +19,19 @@ namespace RevitAddin
             XYZ min0 = PointFlatten(min);
             XYZ max0 = PointFlatten(max);
 
-            using (Transaction t = new Transaction(doc, "test"))
-            {
-                t.Start();
+            //using (Transaction t = new Transaction(doc, "test"))
+            //{
+            //    t.Start();
 
-                //Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
-                //				Line L2 = Line.CreateBound(max0, (min0+max0)/2);
+            //    //Line L1 = Line.CreateBound(min0, (min0+max0)/2);		
+            //    //				Line L2 = Line.CreateBound(max0, (min0+max0)/2);
 
-                //doc.Create.NewDetailCurve(vs,L1);
-                //doc.Create.NewDetailCurve(vs,L2);
+            //    //doc.Create.NewDetailCurve(vs,L1);
+            //    //doc.Create.NewDetailCurve(vs,L2);
 
 
-                t.Commit();
-            }
+            //    t.Commit();
+            //}
 
             return (min0 + max0) / 2;
         }

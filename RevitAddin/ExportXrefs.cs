@@ -106,12 +106,12 @@ namespace RevitAddin
 
                         double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(cloop);
 
-                        
 
-                        double left = vcr.LeftAnnotationCropOffset * vpPlan.Scale / 304.8;
-                        double right = vcr.RightAnnotationCropOffset * vpPlan.Scale / 304.8;
-                        double top = vcr.TopAnnotationCropOffset * vpPlan.Scale / 304.8;
-                        double bottom = vcr.BottomAnnotationCropOffset * vpPlan.Scale / 304.8;
+                        double scale = vpPlan.Scale;
+                        double left = vcr.LeftAnnotationCropOffset * scale;
+                        double right = vcr.RightAnnotationCropOffset * scale;
+                        double top = vcr.TopAnnotationCropOffset *scale;
+                        double bottom = vcr.BottomAnnotationCropOffset *scale;
 
 
                         List<Curve> crvs = new List<Curve>();
@@ -128,8 +128,13 @@ namespace RevitAddin
                             //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
                         }
 
+                        // Original - Centroid of ViewCrop
                         XYZ centroid = Helpers.GetCentroid(pts, pts.Count);
-                        XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
+                        //XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
+
+                        //Option 1 - Centroid of Annotation Crop (Annotation crop matching Viewport boundary)
+                        XYZ centroidAnnotationCrop = new XYZ(centroid.X + (-left + right) / 2, centroid.Y + (top - bottom) / 2, 0);
+                        XYZ viewCentreWCS = ttr.OfPoint(centroidAnnotationCrop);    // per Survey Point
 
                         //Viewport outline width and height to be used to update the autocad viewport
                         XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
@@ -145,7 +150,11 @@ namespace RevitAddin
 
                         //Centrepoint of Viewport on Sheet
                         BoundingBoxXYZ viewPortBBox = vp.get_BoundingBox(vs);
-                        XYZ vpCentreOnSheet = Helpers.BBoxCenter(viewPortBBox, doc, vs);        //viewport centre on sheet
+                        //XYZ vpCentreOnSheet = Helpers.BBoxCenter(viewPortBBox, doc, vs);        //viewport centre on sheet
+
+                        XYZ vpCentreOnSheet = vp.GetBoxCenter();
+                        //XYZ vpCentreOnSheet = new XYZ(originalVpCentreOnSheet.X + (left - right)/2, originalVpCentreOnSheet.Y + (-top + bottom)/2, 0);
+
 
                         string xrefName = sheetNumber + "-xref";
 
