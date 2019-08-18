@@ -92,6 +92,8 @@ namespace RevitAddin
                     {
                         foreach (string sheetNumber in sheetNumbers)
                         {
+                            if (pf.abortFlag)
+                                break;
 
                             // Find the sheet
                             ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
@@ -146,7 +148,7 @@ namespace RevitAddin
 
                                 vpPlan.IsolateCategoriesTemporary(categoryToIsolate);
 
-                                //Use the crop region to find the view centroid
+                                //Use the annotation crop region to find the view centroid
                                 ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
                                 //Set the annotation offset to the minimum (3mm)
                                 vcr.BottomAnnotationCropOffset = 3 / scale;
@@ -156,7 +158,7 @@ namespace RevitAddin
                                 //Get the Viewport Center. This will match the View centroid
                                 changedVPcenter = vp.GetBoxCenter();
 
-                                //Find the view centroid
+                                //Find the view centroid using the annotation crop shape (it should always be a rectangle, while the cropbox shape can be a polygon).
                                 CurveLoop cloop = vcr.GetAnnotationCropShape();
                                 List<XYZ> pts = new List<XYZ>();
 

@@ -30,6 +30,7 @@
         {
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.label1 = new System.Windows.Forms.Label();
+            this.buttonAbort = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // progressBar1
@@ -48,12 +49,23 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Processing...";
             // 
+            // buttonAbort
+            // 
+            this.buttonAbort.Location = new System.Drawing.Point(159, 63);
+            this.buttonAbort.Name = "buttonAbort";
+            this.buttonAbort.Size = new System.Drawing.Size(97, 25);
+            this.buttonAbort.TabIndex = 2;
+            this.buttonAbort.Text = "Abort ";
+            this.buttonAbort.UseVisualStyleBackColor = true;
+            this.buttonAbort.Click += new System.EventHandler(this.ButtonAbort_Click);
+            // 
             // ProgressForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(429, 61);
+            this.ClientSize = new System.Drawing.Size(429, 114);
             this.ControlBox = false;
+            this.Controls.Add(this.buttonAbort);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.progressBar1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -74,5 +86,6 @@
 
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Button buttonAbort;
     }
 }

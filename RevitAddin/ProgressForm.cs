@@ -12,6 +12,7 @@ namespace RevitAddin
 {
     public partial class ProgressForm : Form
     {
+        public bool abortFlag { get; private set; }
         string _format;
         public ProgressForm(string caption, string format, int max)
         {
@@ -35,6 +36,12 @@ namespace RevitAddin
                 label1.Text = string.Format(_format, progressBar1.Value);
             }
             Application.DoEvents();
+        }
+
+        private void ButtonAbort_Click(object sender, EventArgs e)
+        {
+            label1.Text = "Aborting...";
+            abortFlag = true;
         }
     }
 }

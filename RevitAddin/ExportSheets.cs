@@ -89,6 +89,8 @@ namespace RevitAddin
 
                         foreach (string sheetNumber in sheetNumbers)
                         {
+                            if (pf.abortFlag)
+                            break;
 
                             ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
 
@@ -96,21 +98,23 @@ namespace RevitAddin
 
                             foreach (ElementId eid in views)
                             {
-                                View planView = doc.GetElement(eid) as View;
-                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
-                                {
-                                    planView.IsolateCategoriesTemporary(categoryToIsolate);
-                                    if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
+                                    View planView = doc.GetElement(eid) as View;
+
+                                    if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                                     {
-                                        TaskDialog.Show("Error", "Check that the destination folder exists");
+                                        planView.IsolateCategoriesTemporary(categoryToIsolate);
                                     }
-                                    else
-                                    {
-                                        counter += 1;
-                                    }
-                                }
                             }
 
+                            if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
+                            {
+                                TaskDialog.Show("Error", "Check that the destination folder exists");
+                            }
+                            else
+                            {
+                                counter += 1;
+                            }
+                            
                                 pf.Increment();
                             }
 
