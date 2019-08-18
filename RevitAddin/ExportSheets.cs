@@ -76,6 +76,13 @@ namespace RevitAddin
 
                     categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
 
+                    int n = sheetNumbers.Length;
+                    string s = "{0} of " + n.ToString() + " sheets exported...";
+                    string caption = "Export Sheets";
+
+                    using (ProgressForm pf = new ProgressForm(caption,s,n))
+                    {
+
                     using (Transaction t = new Transaction(doc, "Hide categories"))
                     {
                         t.Start();
@@ -93,7 +100,7 @@ namespace RevitAddin
                                 if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                                 {
                                     planView.IsolateCategoriesTemporary(categoryToIsolate);
-                                    if(!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
+                                    if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
                                     {
                                         TaskDialog.Show("Error", "Check that the destination folder exists");
                                     }
@@ -103,12 +110,15 @@ namespace RevitAddin
                                     }
                                 }
                             }
-                        }
+
+                                pf.Increment();
+                            }
 
                         t.RollBack();
+                    }//close using transaction
+                        
                     }
-
-                    }
+                }//close using form
 
                 TaskDialog.Show("Done", $"{counter} sheets have been exported");
                 return Result.Succeeded;
