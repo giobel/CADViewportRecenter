@@ -77,6 +77,13 @@ namespace RevitAddin
             return new XYZ(point.X, point.Y, 0);
         }
 
+        /// <summary>
+        /// https://stackoverflow.com/questions/9815699/how-to-calculate-centroid
+        /// http://coding-experiments.blogspot.com/2009/09/xna-quest-for-centroid-of-polygon.html
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
         public static XYZ GetCentroid(List<XYZ> nodes, int count)
         {
             double x = 0, y = 0, area = 0, k;

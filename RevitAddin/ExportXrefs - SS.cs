@@ -16,20 +16,13 @@ using winForm = System.Windows.Forms;
 namespace RevitAddin
 {
     [Transaction(TransactionMode.Manual)]
-    public class ExportXrefs : IExternalCommand
+    public class ExportXrefsSupersed : IExternalCommand
     {
         public Result Execute(
           ExternalCommandData commandData,
           ref string message,
           ElementSet elements)
         {
-            //Goal: convert the Viewport centre coordinates on a Sheet to Project Base Point (and then Survey Point) coordinates.
-            //Solution: Find the Viewport's view centre point which is in PBP coordinates.
-            //Problem: the Vieport centre does not always match the View centre. Annotations, Matchlines and Grids can affect the extent of the viewport.
-            //Solution: hide all these categories and find the Viewport centre that matches the View centre. Then find the View centre point in PBP coordinates and translate it
-            //by the vector from Viewport original centre and the centre of the Viewport with the categories hidden.
-            //https://thebuildingcoder.typepad.com/blog/2018/03/boston-forge-accelerator-and-aligning-plan-views.html
-
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;
@@ -56,7 +49,7 @@ namespace RevitAddin
 
             ProjectLocation pl = doc.ActiveProjectLocation;
             Transform ttr = pl.GetTotalTransform().Inverse;
-            ProjectPosition projPosition = doc.ActiveProjectLocation.GetProjectPosition(new XYZ(0, 0, 0)); //rotation
+            ProjectPosition projPosition = doc.ActiveProjectLocation.GetProjectPosition(new XYZ(0, 0, 0)); //rotation??
 
             IEnumerable<ViewSheet> allSheets = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Sheets)
                 .WhereElementIsNotElementType().ToElements().Cast<ViewSheet>();
@@ -86,16 +79,13 @@ namespace RevitAddin
                     foreach (string sheetNumber in sheetNumbers)
                     {
 
-                        // Find the sheet
                         ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
 
-                        //Collect all the viewports on the sheet
+                        //Viewport vp = doc.GetElement(vs.GetAllViewports().Where(x => x.GetType().Name == "Floor Plan").First()) as Viewport;
+
                         ICollection<ElementId> viewportIds = vs.GetAllViewports();
 
-                        //Find the viewport that shows a Floor Plan (Architecture) or Structural Plan (Engineering). 
                         Viewport vp = null;
-                        
-                        //Find the viewplan shown in the viewport
                         View vpPlan = null;
 
                         foreach (ElementId eid in viewportIds)
@@ -110,85 +100,87 @@ namespace RevitAddin
                             }
                         }
 
-                        //Get the current Viewport Centre for Autocad Viewport
-                        XYZ unchangedVPcenter = vp.GetBoxCenter();
+                        ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
 
-                        //Set its Z value to 0
-                        XYZ flattenVPcenter = new XYZ(unchangedVPcenter.X, unchangedVPcenter.Y, 0);
+                        IList<CurveLoop> cloop = vcr.GetCropShape(); //view crop outline
 
-                        //The current Viewport Centre does not match the view center. Hide all the elements in the view and set the annotation crop to the minimum (3mm). Now the 
-                        //Viewport centre will match the View centre. We can then use the unchangedCenter to changedCenter vector to move the view centerpoint to the original
-                        //viewport centre.
+                        CurveLoop annotationloop = vcr.GetAnnotationCropShape();
 
-                        //Instead of hiding categories, we can isolate an empty one. Check that this category (OST_Loads) exists in the model or it will throw an error
-                        ICollection<ElementId> categoryToIsolate = new List<ElementId>();
-                        Categories groups = doc.Settings.Categories;
-                        categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
+                        double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(cloop);
 
-                        //This is the new Viewport centre, aligned with the View centre
-                        XYZ changedVPcenter = null;
 
-                        // This is the View centre
-                        XYZ centroid = null;
+                        double scale = vpPlan.Scale;
+                        double left = vcr.LeftAnnotationCropOffset * scale;
+                        double right = vcr.RightAnnotationCropOffset * scale;
+                        double top = vcr.TopAnnotationCropOffset *scale;
+                        double bottom = vcr.BottomAnnotationCropOffset *scale;
 
-                        double scale = 304.8;
 
-                        using (Transaction t = new Transaction(doc, "Hide categories"))
+                        List<Curve> crvs = new List<Curve>();
+
+                        List<XYZ> pts = new List<XYZ>();
+
+                        ////Option 1 centroid of view crop
+                        //foreach (Curve crv in cloop.First())
+                        //{
+
+                        //    crvs.Add(crv);
+                        //    pts.Add(crv.GetEndPoint(0));
+                        //    pts.Add(crv.GetEndPoint(1));
+
+                        //    //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
+                        //}
+
+
+                        //Option 2 centroid of annotation crop
+                        foreach (Curve crv in annotationloop)
                         {
-                            t.Start();
 
-                            vpPlan.IsolateCategoriesTemporary(categoryToIsolate);
+                            pts.Add(crv.GetEndPoint(0));
+                            pts.Add(crv.GetEndPoint(1));
 
-                            //Use the crop region to find the view centroid
-                            ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
-                            //Set the annotation offset to the minimum (3mm)
-                            vcr.BottomAnnotationCropOffset = 3 / scale;
-                            vcr.TopAnnotationCropOffset = 3 / scale;
-                            vcr.LeftAnnotationCropOffset = 3 / scale;
-                            vcr.RightAnnotationCropOffset = 3 / scale;
-                            //Get the Viewport Center. This will match the View centroid
-                            changedVPcenter = vp.GetBoxCenter();
-                            
-                            //Find the view centroid
-                            CurveLoop cloop = vcr.GetAnnotationCropShape();
-                            List<XYZ> pts = new List<XYZ>();
-
-                            foreach (Curve crv in cloop)
-                            {
-                                pts.Add(crv.GetEndPoint(0));
-                                pts.Add(crv.GetEndPoint(1));
-                            }
-
-                            //View centroid with elements hidden
-                            centroid = Helpers.GetCentroid(pts, pts.Count);
-
-                            t.RollBack();
+                            //Element e = doc.Create.NewDetailCurve(vpPlan, crv);
                         }
 
-                        //Set ChangedVP center Z value to 0
-                        XYZ flattenChangedVPcenter = new XYZ(changedVPcenter.X, changedVPcenter.Y, 0);
+                       
+                        XYZ centroid = Helpers.GetCentroid(pts, pts.Count);
+                        //XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
 
-                        //This is the vector from the Viewport original centre to Viewport centre with all the elements hidden and the cropbox set to 3mm evenly
-                        XYZ viewPointsVector = (flattenVPcenter - flattenChangedVPcenter) * vpPlan.Scale;
+                        //Option 1 - Centroid of CropShape + Annotation Crop (Annotation crop matching Viewport boundary)
+                        //XYZ centroidAnnotationCrop = new XYZ(centroid.X + (-left + right) / 2, centroid.Y + (top - bottom) / 2, 0);
+                        //XYZ viewCentreWCS = ttr.OfPoint(centroidAnnotationCrop);    // per Survey Point
 
-                        //View center adjusted to Viewport original centre (the one to be used in Autocad)
-                        XYZ translatedCentroid = centroid + viewPointsVector;
-
-                        //View center per Survey Point coordinates
-                        XYZ viewCentreWCS = ttr.OfPoint(translatedCentroid); 
+                        //Option 2 - Centroid of Annotation Crop Shape
+                        XYZ viewCentreWCS = ttr.OfPoint(centroid);    // per Survey Point
 
                         //Viewport outline width and height to be used to update the autocad viewport
                         XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
                         XYZ minPt = vp.GetBoxOutline().MinimumPoint;
+
                         int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
                         int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
 
-                        //Suffix to xref
+                        ////Centrepoint of View
+                        //BoundingBoxXYZ viewBBox = vpPlan.get_BoundingBox(vpPlan);
+                        //XYZ viewCentre = Helpers.BBoxCenter(viewBBox, doc, vs); // per Project Base Point
+                        //XYZ viewCentreWCS = ttr.OfPoint(viewCentre);    // per Survey Point
+
+                        //Centrepoint of Viewport on Sheet
+                        BoundingBoxXYZ viewPortBBox = vp.get_BoundingBox(vs);
+                        //XYZ vpCentreOnSheet = Helpers.BBoxCenter(viewPortBBox, doc, vs);        //viewport centre on sheet
+
+                        XYZ vpCentreOnSheet = vp.GetBoxCenter();
+                        //XYZ vpCentreOnSheet = new XYZ(originalVpCentreOnSheet.X + (left - right)/2, originalVpCentreOnSheet.Y + (-top + bottom)/2, 0);
+
+
                         string xrefName = sheetNumber + "-xref";
+
+                        
 
                         if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
                         {
-                            TaskDialog.Show("Error", "Check that the destination folder exists");       
+                            TaskDialog.Show("Error", "Check that the destination folder exists or the Export Settings exists");
+                            
                         }
                         else
                         {
@@ -199,7 +191,7 @@ namespace RevitAddin
                                                 sheetNumber,
                                                 Helpers.PointToString(viewCentreWCS),
                                                 projPosition.Angle * 180 / Math.PI,
-                                                Helpers.PointToString(flattenVPcenter),
+                                                Helpers.PointToString(vpCentreOnSheet),
                                                 width.ToString(),
                                                 height.ToString(),
                                                 xrefName
