@@ -8,7 +8,6 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.UI.Events;
 using winForm = System.Windows.Forms;
 
 #endregion
@@ -16,7 +15,7 @@ using winForm = System.Windows.Forms;
 namespace RevitAddin
 {
     [Transaction(TransactionMode.Manual)]
-    public class ExportSheets : IExternalCommand
+    public class ExportSheetsSS : IExternalCommand
     {
         public Result Execute(
           ExternalCommandData commandData,
@@ -30,10 +29,6 @@ namespace RevitAddin
 
             IEnumerable<ViewSheet> allSheets = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Sheets)
                 .WhereElementIsNotElementType().ToElements().Cast<ViewSheet>();
-
-            //Handling and Dismissing a Warning Message
-            //https://thebuildingcoder.typepad.com/blog/2013/03/export-wall-parts-individually-to-dxf.html
-            uiapp.DialogBoxShowing += new EventHandler<DialogBoxShowingEventArgs>(OnDialogBoxShowing);
 
             int counter = 0;
 
@@ -70,45 +65,70 @@ namespace RevitAddin
                         return Result.Failed;
                     }
 
-                    ICollection<ElementId> categoryToIsolate = new List<ElementId>();
-
-                    Categories groups = doc.Settings.Categories;
-
-                    categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
-
-                    using (Transaction t = new Transaction(doc, "Hide categories"))
+                    using (TransactionGroup tranGroup = new TransactionGroup(doc))
                     {
-                        t.Start();
 
-                        foreach (string sheetNumber in sheetNumbers)
+                        tranGroup.Start("Hide and Export");
+
+
+                        using (Transaction t = new Transaction(doc))
                         {
 
-                            ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
-
-                            List<ElementId> views = vs.GetAllPlacedViews().ToList();
-
-                            foreach (ElementId eid in views)
+                            foreach (string sheetNumber in sheetNumbers)
                             {
-                                View planView = doc.GetElement(eid) as View;
-                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
+
+                                ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
+
+                                List<ElementId> views = vs.GetAllPlacedViews().ToList();
+
+                                View planView = doc.GetElement(views.First()) as View;
+
+                                ICollection<Element> fec = null;
+
+                                t.Start("Hide elements");
+
+                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan)
                                 {
-                                    planView.IsolateCategoriesTemporary(categoryToIsolate);
-                                    if(!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
-                                    {
-                                        TaskDialog.Show("Error", "Check that the destination folder exists");
-                                    }
-                                    else
-                                    {
-                                        counter += 1;
-                                    }
+                                    fec = new FilteredElementCollector(doc, views.First())
+                                                                                .WhereElementIsNotElementType()
+                                                                                .ToElements()
+                                                                                .Where(x => x.CanBeHidden(planView))
+                                                                                .ToList();
+
+                                    planView.HideElements(fec.Select(x => x.Id).ToList());
                                 }
+
+                                t.Commit();
+
+                                //planView.ViewType == ViewType.EngineeringPlan
+                                t.Start("Export Sheet");
+
+                                if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
+                                {
+                                    TaskDialog.Show("Error", "Check that the destination folder exists");
+                                }
+                                else
+                                {
+                                    counter += 1;
+                                }
+
+                                t.Commit();
+
+                                t.Start("Unhide elements");
+
+                                if (null != fec)
+                                    planView.UnhideElements(fec.Select(x => x.Id).ToList());
+
+                                t.Commit();
+
                             }
+
                         }
 
-                        t.RollBack();
+                        tranGroup.Assimilate();
                     }
 
-                    }
+                }
 
                 TaskDialog.Show("Done", $"{counter} sheets have been exported");
                 return Result.Succeeded;
@@ -118,23 +138,7 @@ namespace RevitAddin
                 TaskDialog.Show("Error", ex.Message);
                 return Result.Failed;
             }
-            finally
-            {
-                uiapp.DialogBoxShowing -= new EventHandler<DialogBoxShowingEventArgs>(OnDialogBoxShowing);
-            }
 
-        }
-
-        private void OnDialogBoxShowing(object sender, DialogBoxShowingEventArgs e)
-        {
-            TaskDialogShowingEventArgs e2 = e as TaskDialogShowingEventArgs;
-
-            if (null != e2 && e2.DialogId.Equals(
-              "TaskDialog_Really_Print_Or_Export_Temp_View_Modes"))
-            {
-                e.OverrideResult(
-                  (int)TaskDialogResult.CommandLink2);
-            }
         }
     }
 }

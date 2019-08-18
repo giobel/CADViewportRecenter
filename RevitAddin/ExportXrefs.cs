@@ -103,7 +103,7 @@ namespace RevitAddin
                             Viewport vport = doc.GetElement(eid) as Viewport;
                             View planView = doc.GetElement(vport.ViewId) as View;
 
-                            if (planView.ViewType== ViewType.FloorPlan || planView.ViewType==ViewType.EngineeringPlan)
+                            if (planView.ViewType== ViewType.FloorPlan || planView.ViewType==ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                             {
                                 vp = vport;
                                 vpPlan = planView;

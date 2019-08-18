@@ -52,7 +52,6 @@ namespace RevitAddin
                     ICollection<ElementId> views = new List<ElementId>();
                     views.Add(view.Id);
                     // The document has to be saved already, therefore it has a valid PathName.
-                    
                     exported = document.Export(folder, xrefName, views, dwgOptions);
                     break;
                 }
