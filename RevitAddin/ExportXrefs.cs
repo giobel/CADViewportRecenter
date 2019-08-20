@@ -217,7 +217,7 @@ namespace RevitAddin
                             pf.Increment();
                         }
                     }
-                    File.WriteAllText(outputFile, sb.ToString());
+                    File.WriteAllText($"{destinationFolder}\\{outputFile}", sb.ToString());
 
                     TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created");
                 }

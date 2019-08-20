@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.label1 = new System.Windows.Forms.Label();
+            this.labelProcessingText = new System.Windows.Forms.Label();
             this.buttonAbort = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -40,14 +40,14 @@
             this.progressBar1.Size = new System.Drawing.Size(406, 23);
             this.progressBar1.TabIndex = 0;
             // 
-            // label1
+            // labelProcessingText
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(8, 7);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(68, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Processing...";
+            this.labelProcessingText.AutoSize = true;
+            this.labelProcessingText.Location = new System.Drawing.Point(8, 7);
+            this.labelProcessingText.Name = "labelProcessingText";
+            this.labelProcessingText.Size = new System.Drawing.Size(68, 13);
+            this.labelProcessingText.TabIndex = 1;
+            this.labelProcessingText.Text = "Processing...";
             // 
             // buttonAbort
             // 
@@ -66,7 +66,7 @@
             this.ClientSize = new System.Drawing.Size(429, 114);
             this.ControlBox = false;
             this.Controls.Add(this.buttonAbort);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.labelProcessingText);
             this.Controls.Add(this.progressBar1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MaximizeBox = false;
@@ -84,7 +84,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label labelProcessingText;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Button buttonAbort;
     }

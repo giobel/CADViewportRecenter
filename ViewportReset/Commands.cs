@@ -19,7 +19,6 @@ namespace AttributeUpdater
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
 
-
             // User should input the folder where the dwgs are saved
             PromptResult pr = ed.GetString("\nEnter folder containing DWGs to process: ");
 
@@ -38,23 +37,25 @@ namespace AttributeUpdater
 
             dict.Remove(dict.Keys.First()); //remove the csv header
 
-            foreach (string fileName in fileNames)
+            foreach (string fileName in dict.Keys)
             {
-                if (fileName.EndsWith(".dwg", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    FileInfo fi = new FileInfo(fileName);
 
-                    string name = fi.Name.Substring(0, fi.Name.Length - 4);
-                    string outputName = fileName.Substring(0, fileName.Length - 4) + "_updated.dwg";
+                //FileInfo fi = new FileInfo($"{ pathName }\\{fileName}.dwg");
+                //string name = fi.Name.Substring(0, fi.Name.Length - 4);
+                //string outputName = fileName.Substring(0, fileName.Length - 4) + "_updated.dwg";
+                string name = fileName;
+                string filePath = $"{pathName}\\{fileName}.dwg";
+                string outputPath = $"{pathName}\\{fileName}_updated.dwg";
+
 
                     Database db = new Database(false, false);
                     using (db)
                     {
                         try
                         {
-                            ed.WriteMessage("\n\nProcessing file: " + fileName);
+                            ed.WriteMessage($"\n\nProcessing file: {filePath} ");
 
-                            db.ReadDwgFile(fileName, FileShare.ReadWrite, false, "");
+                            db.ReadDwgFile(filePath, FileShare.ReadWrite, false, "");
 
                             LayoutManager lm = LayoutManager.Current;
 
@@ -89,9 +90,7 @@ namespace AttributeUpdater
                                 DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
 
                                 Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
-
-                                
-
+                            
                                 foreach (ObjectId ID in CurrentLo.GetViewports())
                                 {
                                     Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
@@ -100,17 +99,17 @@ namespace AttributeUpdater
 
                                     Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
-                                    {
-                                        VP.UpgradeOpen();
-                                        double cs = VP.CustomScale; //save the original scale as it changes when we change viewport width and height
-                                        VP.CenterPoint = revitViewportCentre; //move the viewport to the revit location
-                                        VP.Width = double.Parse(dict[name][8]); //set the width to match the revit width
-                                        VP.Height = double.Parse(dict[name][9]); //idem
-                                        VP.CustomScale = cs;
-                                        //VP.Erase();
+                                    double degrees = DegToRad(double.Parse(dict[name][4]));
+                                    double vpWidht = double.Parse(dict[name][8]);
+                                    double vpHeight = double.Parse(dict[name][9]);
 
-                                        TwistViewport(VP.Id, revitViewCentreWCS, DegToRad(double.Parse(dict[name][4])));
+                                    if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
+                                {
+                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees,vpWidht, vpHeight);
+                                    }
+                                    else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
+                                    {
+                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
                                     }
                                 }
 
@@ -119,9 +118,9 @@ namespace AttributeUpdater
 
                             BindXrefs(db);
 
-                            ed.WriteMessage("\nSaving to file: {0}", outputName);
+                            ed.WriteMessage("\nSaving to file: {0}", outputPath);
 
-                            db.SaveAs(outputName, DwgVersion.Current);
+                            db.SaveAs(outputPath, DwgVersion.Current);
 
                             saved++;
 
@@ -134,7 +133,7 @@ namespace AttributeUpdater
                             problem++;
                         }
                     }
-                }
+                
             }
             ed.WriteMessage(
               "\n\nSuccessfully processed {0} files, of which {1} had " +
@@ -147,6 +146,19 @@ namespace AttributeUpdater
         }
 
 
+
+        public void UpdateViewport(Viewport _vp, Point3d rvtCentre, Point3d rvtCentreWCS, double degrees, double vpWidth, double vpHeight)
+        {
+            _vp.UpgradeOpen();
+            double cs = _vp.CustomScale; //save the original scale as it changes when we change viewport width and height
+            _vp.CenterPoint = rvtCentre; //move the viewport to the revit location
+            _vp.Width = vpWidth; //set the width to match the revit width
+            _vp.Height = vpHeight; //idem
+            _vp.CustomScale = cs;
+            //VP.Erase();
+
+            TwistViewport(_vp.Id, rvtCentreWCS, degrees);
+        }
         public void BindXrefs(Database db)
 
         {

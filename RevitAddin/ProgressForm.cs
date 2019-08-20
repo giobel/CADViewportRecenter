@@ -14,12 +14,14 @@ namespace RevitAddin
     {
         public bool abortFlag { get; private set; }
         string _format;
+        public string format { get; set; }
+
         public ProgressForm(string caption, string format, int max)
         {
             _format = format;
             InitializeComponent();
             Text = caption;
-            label1.Text = (null == format) ? caption : string.Format(format, 0);
+            labelProcessingText.Text = (null == format) ? caption : string.Format(format, 0);
             progressBar1.Minimum = 0;
             progressBar1.Maximum = max;
             progressBar1.Value = 0;
@@ -33,14 +35,14 @@ namespace RevitAddin
 
             if (null != _format)
             {
-                label1.Text = string.Format(_format, progressBar1.Value);
+                labelProcessingText.Text = string.Format(_format, progressBar1.Value);
             }
             Application.DoEvents();
         }
 
         private void ButtonAbort_Click(object sender, EventArgs e)
         {
-            label1.Text = "Aborting...";
+            labelProcessingText.Text = "Aborting...";
             abortFlag = true;
         }
     }

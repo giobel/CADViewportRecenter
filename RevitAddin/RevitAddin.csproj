@@ -63,10 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
-    <Compile Include="ExportSheets - SS.cs" />
-    <Compile Include="ExportXrefs - SS.cs" />
     <Compile Include="ExportXrefs.cs" />
     <Compile Include="ExportSheets.cs" />
+    <Compile Include="FindOversizedViewport.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
