@@ -35,12 +35,15 @@ namespace RevitAddin
             //https://thebuildingcoder.typepad.com/blog/2013/03/export-wall-parts-individually-to-dxf.html
             uiapp.DialogBoxShowing += new EventHandler<DialogBoxShowingEventArgs>(OnDialogBoxShowing);
 
+            IList<string> dWGExportOptions = DWGExportOptions.GetPredefinedSetupNames(doc);
+
             int counter = 0;
 
             try
             {
                 using (var form = new Form1())
                 {
+                    form.cboxDataSource = dWGExportOptions;
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
 
@@ -49,7 +52,7 @@ namespace RevitAddin
                     {
                         return Result.Cancelled;
                     }
-
+                    
                     string destinationFolder = form.tBoxDestinationFolder;
 
                     string[] sheetNumbers = form.tBoxSheetNumber.Split(' ');

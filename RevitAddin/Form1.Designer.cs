@@ -38,7 +38,9 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.textBoxExportSettings = new System.Windows.Forms.TextBox();
+            this.buttonBrowse = new System.Windows.Forms.Button();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.cboxExportSettings = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // textBoxSheetNumbers
@@ -82,7 +84,7 @@
             // 
             this.textBoxFolder.Location = new System.Drawing.Point(9, 29);
             this.textBoxFolder.Name = "textBoxFolder";
-            this.textBoxFolder.Size = new System.Drawing.Size(354, 20);
+            this.textBoxFolder.Size = new System.Drawing.Size(224, 20);
             this.textBoxFolder.TabIndex = 4;
             this.textBoxFolder.Text = "C:\\Users\\giovanni.brogiolo\\Desktop\\MTCStandards";
             // 
@@ -122,21 +124,32 @@
             this.label6.TabIndex = 10;
             this.label6.Text = "Export setting name";
             // 
-            // textBoxExportSettings
+            // buttonBrowse
             // 
-            this.textBoxExportSettings.Location = new System.Drawing.Point(9, 75);
-            this.textBoxExportSettings.Name = "textBoxExportSettings";
-            this.textBoxExportSettings.Size = new System.Drawing.Size(354, 20);
-            this.textBoxExportSettings.TabIndex = 9;
-            this.textBoxExportSettings.Text = "Metrolinx Export Settings Xref";
+            this.buttonBrowse.Location = new System.Drawing.Point(239, 26);
+            this.buttonBrowse.Name = "buttonBrowse";
+            this.buttonBrowse.Size = new System.Drawing.Size(84, 25);
+            this.buttonBrowse.TabIndex = 11;
+            this.buttonBrowse.Text = "browse...";
+            this.buttonBrowse.UseVisualStyleBackColor = true;
+            this.buttonBrowse.Click += new System.EventHandler(this.buttonBrowse_Click);
+            // 
+            // cboxExportSettings
+            // 
+            this.cboxExportSettings.FormattingEnabled = true;
+            this.cboxExportSettings.Location = new System.Drawing.Point(13, 74);
+            this.cboxExportSettings.Name = "cboxExportSettings";
+            this.cboxExportSettings.Size = new System.Drawing.Size(220, 21);
+            this.cboxExportSettings.TabIndex = 12;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(380, 223);
+            this.Controls.Add(this.cboxExportSettings);
+            this.Controls.Add(this.buttonBrowse);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.textBoxExportSettings);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -148,6 +161,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -164,6 +178,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBoxExportSettings;
+        private System.Windows.Forms.Button buttonBrowse;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.ComboBox cboxExportSettings;
     }
 }

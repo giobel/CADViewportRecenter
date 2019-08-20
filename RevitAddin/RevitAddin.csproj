@@ -86,6 +86,7 @@
     <Content Include="favicon.ico" />
     <Resource Include="Images\sheets.png" />
     <Resource Include="Images\xref.png" />
+    <Resource Include="Images\overlap.png" />
     <Content Include="RevitAddin.addin" />
   </ItemGroup>
   <ItemGroup>

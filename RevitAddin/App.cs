@@ -23,7 +23,10 @@ namespace RevitAddin
                 
                 AddPushButton(tools, "btnExportSheets", "Export Sheets", "", "pack://application:,,,/RevitAddin;component/Images/sheets.png", "RevitAddin.ExportSheets", "Export selected sheets to dwg. View plan elements will be temporarily hidden (atm it only processes 1 plan view per sheet).");
 
-                AddPushButton(tools, "btnTristan", "Export Xrefs+CSV", "", "pack://application:,,,/RevitAddin;component/Images/xref.png", "RevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
+                AddPushButton(tools, "btnTristan", "Export\nXrefs+CSV", "", "pack://application:,,,/RevitAddin;component/Images/xref.png", "RevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
+                
+                AddPushButton(tools, "btnOversized", "Check\nViewport Size", "", "pack://application:,,,/RevitAddin;component/Images/overlap.png", "RevitAddin.FindOversizedViewport", "Find viewports larger than the sheet.");
+                //Icon made by Swifticons https://www.flaticon.com is licensed by Creative Commons BY 3.0
 
                 return Result.Succeeded;
             }
