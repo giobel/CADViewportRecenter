@@ -200,7 +200,7 @@ namespace RevitAddin
                             int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
 
                             //Sheet filename
-                            string fileName = vs.LookupParameter("CADD File Name").AsString();
+                            string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
                             //Suffix to xref
                             string xrefName = vs.SheetNumber + "-xref";
 

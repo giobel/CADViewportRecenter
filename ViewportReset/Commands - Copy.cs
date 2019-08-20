@@ -11,10 +11,10 @@ using System.Reflection;
 
 namespace AttributeUpdater
 {
-    public class CommandsCopy
+    public class CommandsK
     {
-        [CommandMethod("TRISTANCOPY")]
-        public void UpdateAttributeInFiles()
+        [CommandMethod("KEATAN")]
+        public void UpdateAttributeInFilesK()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
@@ -48,102 +48,92 @@ namespace AttributeUpdater
                 string outputPath = $"{pathName}\\{fileName}_updated.dwg";
 
 
-                //Database db = new Database(false, false);
-                Database db = new Database(false, true);
+                Database db = new Database(false, false);
                 using (db)
+                {
+                    try
                     {
-                        try
+                        ed.WriteMessage($"\n\nProcessing file: {filePath} ");
+
+                        db.ReadDwgFile(filePath, FileShare.ReadWrite, false, "");
+
+                        LayoutManager lm = LayoutManager.Current;
+
+                        lm.CurrentLayout = "Model";
+
+                        using (Transaction trans = db.TransactionManager.StartTransaction())
                         {
-                            ed.WriteMessage($"\n\nProcessing file: {filePath} ");
+                            //Attch Xref
+                            string PathName = $"{pathName}\\{dict[name][10]}";
+                            ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
 
-                            db.ReadDwgFile(filePath, FileShare.ReadWrite, false, "");
-                            db.CloseInput(true);
-                            //Editor currentOpenEditor = Application.DocumentManager.GetDocument(db).Editor; still the original document editor
-                            
-                            LayoutManager lm = LayoutManager.Current;
-
-                            lm.CurrentLayout = "Model";
-
-                            using (Transaction trans = db.TransactionManager.StartTransaction())
+                            if (!acXrefId.IsNull)
                             {
-                                //Attch Xref
-                                string PathName = $"{pathName}\\{dict[name][10]}";
-                                ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
-
-                                if (!acXrefId.IsNull)
+                                // Attach the DWG reference to the current space
+                                Point3d insPt = new Point3d(0, 0, 0);
+                                using (BlockReference acBlkRef = new BlockReference(insPt, acXrefId))
                                 {
-                                    // Attach the DWG reference to the current space
-                                    Point3d insPt = new Point3d(0, 0, 0);
-                                    using (BlockReference acBlkRef = new BlockReference(insPt, acXrefId))
-                                    {
-                                        BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                                        BlockTableRecord modelSpace = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-                                        modelSpace.AppendEntity(acBlkRef);
+                                    BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                                    BlockTableRecord modelSpace = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                                    modelSpace.AppendEntity(acBlkRef);
 
-                                        trans.AddNewlyCreatedDBObject(acBlkRef, true);
-                                    }
+                                    trans.AddNewlyCreatedDBObject(acBlkRef, true);
                                 }
-
-                                lm.CurrentLayout = "Layout1";
-
-                                //forms.MessageBox.Show(lm.CurrentLayout);
-
-                                string currentLo = lm.CurrentLayout;
-
-                                DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
-
-                                Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
-                            
-                                foreach (ObjectId ID in CurrentLo.GetViewports())
-                                {
-                                    Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
-
-                                    Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
-
-                                    Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
-
-                                    double degrees = DegToRad(double.Parse(dict[name][4]));
-                                    double vpWidht = double.Parse(dict[name][8]);
-                                    double vpHeight = double.Parse(dict[name][9]);
-
-                                    if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
-                                {
-                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees,vpWidht, vpHeight);
-                                    }
-                                    else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
-                                    {
-                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
-                                    }
-                                }
-
-                                trans.Commit();
                             }
 
-                            BindXrefs(db);
+                            lm.CurrentLayout = "Layout1";
 
-                        //currentOpenEditor.Command("_.ZOOM","e");
+                            //forms.MessageBox.Show(lm.CurrentLayout);
 
+                            string currentLo = lm.CurrentLayout;
 
-                        db.Audit(true, true);
+                            DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
 
+                            Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
 
+                            foreach (ObjectId ID in CurrentLo.GetViewports())
+                            {
+                                Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
-                            ed.WriteMessage("\nSaving to file: {0}", outputPath);
+                                Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
 
-                            db.SaveAs(outputPath, DwgVersion.Current);
+                                Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
 
-                            saved++;
+                                double degrees = DegToRad(double.Parse(dict[name][4]));
+                                double vpWidht = double.Parse(dict[name][8]);
+                                double vpHeight = double.Parse(dict[name][9]);
 
-                            processed++;
+                                if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
+                                {
+                                    UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                                }
+                                else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
+                                {
+                                    UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                                }
+                            }
+
+                            trans.Commit();
                         }
-                        catch (System.Exception ex)
-                        {
-                            ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
 
-                            problem++;
-                        }
+                        BindXrefs(db);
+
+                        ed.WriteMessage("\nSaving to file: {0}", outputPath);
+
+                        db.SaveAs(outputPath, DwgVersion.Current);
+
+                        saved++;
+
+                        processed++;
                     }
-                
+                    catch (System.Exception ex)
+                    {
+                        ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
+
+                        problem++;
+                    }
+                }
+
             }
             ed.WriteMessage(
               "\n\nSuccessfully processed {0} files, of which {1} had " +
@@ -334,7 +324,6 @@ namespace AttributeUpdater
                 acTrans.Commit();
             }
         }
-
         static double DegToRad(double deg)
         {
             return deg * Math.PI / 180.0;

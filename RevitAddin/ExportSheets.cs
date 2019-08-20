@@ -110,8 +110,10 @@ namespace RevitAddin
                                     break;
 
                                 //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
+
+                                string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
                                 
-                                string fileName = vs.LookupParameter("CADD File Name").AsString();
+ 
 
                                 List<ElementId> views = vs.GetAllPlacedViews().ToList();
 
