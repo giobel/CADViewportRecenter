@@ -61,6 +61,10 @@ namespace RevitAddin
             IEnumerable<ViewSheet> allSheets = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Sheets)
                 .WhereElementIsNotElementType().ToElements().Cast<ViewSheet>();
 
+            IList<string> dWGExportOptions = DWGExportOptions.GetPredefinedSetupNames(doc);
+
+            List<ViewScheduleOption> viewScheduleOptions = Helpers.GetViewScheduleOptions(doc);
+
             int counter = 0;
 
             try
@@ -68,6 +72,9 @@ namespace RevitAddin
 
                 using (var form = new Form1())
                 {
+                    form.cboxExportSettingsDataSource = dWGExportOptions;
+                    //set the form sheets
+                    form.cboxSheetDataSource = viewScheduleOptions;
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
 
@@ -79,24 +86,24 @@ namespace RevitAddin
 
                     string destinationFolder = form.tBoxDestinationFolder;
 
-                    string[] sheetNumbers = form.tBoxSheetNumber.Split(' ');
+                    //string[] sheetNumbers = form.tboxSelectedSheets.Split(' ');
+                    List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
 
                     string exportSettings = form.tBoxExportSettings;
 
-
-                    int n = sheetNumbers.Length;
+                    int n = form.tboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " plans exported...";
                     string caption = "Export xrefs";
 
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
-                        foreach (string sheetNumber in sheetNumbers)
+                        foreach (ViewSheet vs in selectedSheets)
                         {
                             if (pf.abortFlag)
                                 break;
 
                             // Find the sheet
-                            ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
+                            //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
 
                             //Collect all the viewports on the sheet
                             ICollection<ElementId> viewportIds = vs.GetAllViewports();
@@ -192,8 +199,10 @@ namespace RevitAddin
                             int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
                             int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
 
+                            //Sheet filename
+                            string fileName = vs.LookupParameter("CADD File Name").AsString();
                             //Suffix to xref
-                            string xrefName = sheetNumber + "-xref";
+                            string xrefName = vs.SheetNumber + "-xref";
 
                             if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
                             {
@@ -205,7 +214,7 @@ namespace RevitAddin
                             }
 
                             sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
-                                                    sheetNumber,
+                                                    fileName,
                                                     Helpers.PointToString(viewCentreWCS),
                                                     projPosition.Angle * 180 / Math.PI,
                                                     Helpers.PointToString(flattenVPcenter),

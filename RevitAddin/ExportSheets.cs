@@ -37,13 +37,19 @@ namespace RevitAddin
 
             IList<string> dWGExportOptions = DWGExportOptions.GetPredefinedSetupNames(doc);
 
+            List<ViewScheduleOption> viewScheduleOptions = Helpers.GetViewScheduleOptions(doc);
+
             int counter = 0;
 
             try
             {
                 using (var form = new Form1())
                 {
-                    form.cboxDataSource = dWGExportOptions;
+                    //set the form export settings
+                    form.cboxExportSettingsDataSource = dWGExportOptions;
+                    //set the form sheets
+                    form.cboxSheetDataSource = viewScheduleOptions;
+
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
 
@@ -52,18 +58,24 @@ namespace RevitAddin
                     {
                         return Result.Cancelled;
                     }
-                    
+
                     string destinationFolder = form.tBoxDestinationFolder;
 
-                    string[] sheetNumbers = form.tBoxSheetNumber.Split(' ');
+                    //string[] sheetNumbers = form.tboxSelectedSheets.Split(' ');
 
                     string exportSettings = form.tBoxExportSettings;
 
                     DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.tBoxExportSettings);
-                    
+
                     if (dwgOptions == null)
                     {
                         TaskDialog.Show("Error", "Export setting not found");
+                        return Result.Failed;
+                    }
+
+                    if (dwgOptions.MergedViews == false)
+                    {
+                        TaskDialog.Show("Error", "Please unselect export view as external reference.");
                         return Result.Failed;
                     }
 
@@ -79,51 +91,55 @@ namespace RevitAddin
 
                     categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
 
-                    int n = sheetNumbers.Length;
+                    List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
+
+                    int n = form.tboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
 
-                    using (ProgressForm pf = new ProgressForm(caption,s,n))
+                    using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
 
-                    using (Transaction t = new Transaction(doc, "Hide categories"))
-                    {
-                        t.Start();
-
-                        foreach (string sheetNumber in sheetNumbers)
+                        using (Transaction t = new Transaction(doc, "Hide categories"))
                         {
-                            if (pf.abortFlag)
-                            break;
+                            t.Start();
 
-                            ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
-
-                            List<ElementId> views = vs.GetAllPlacedViews().ToList();
-
-                            foreach (ElementId eid in views)
+                            foreach (ViewSheet vs in selectedSheets)
                             {
+                                if (pf.abortFlag)
+                                    break;
+
+                                //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
+                                
+                                string fileName = vs.LookupParameter("CADD File Name").AsString();
+
+                                List<ElementId> views = vs.GetAllPlacedViews().ToList();
+
+                                foreach (ElementId eid in views)
+                                {
                                     View planView = doc.GetElement(eid) as View;
 
                                     if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                                     {
                                         planView.IsolateCategoriesTemporary(categoryToIsolate);
                                     }
-                            }
+                                }
 
-                            if (!Helpers.ExportDWG(doc, vs, exportSettings, sheetNumber, destinationFolder))
-                            {
-                                TaskDialog.Show("Error", "Check that the destination folder exists");
-                            }
-                            else
-                            {
-                                counter += 1;
-                            }
-                            
+                                if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
+                                {
+                                    TaskDialog.Show("Error", "Check that the destination folder exists");
+                                }
+                                else
+                                {
+                                    counter += 1;
+                                }
+
                                 pf.Increment();
                             }
 
-                        t.RollBack();
-                    }//close using transaction
-                        
+                            t.RollBack();
+                        }//close using transaction
+
                     }
                 }//close using form
 

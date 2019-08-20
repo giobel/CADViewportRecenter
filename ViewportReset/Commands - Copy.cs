@@ -11,18 +11,13 @@ using System.Reflection;
 
 namespace AttributeUpdater
 {
-    public class Commands
+    public class CommandsCopy
     {
-        [CommandMethod("TRISTAN")]
+        [CommandMethod("TRISTANCOPY")]
         public void UpdateAttributeInFiles()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
-
-            //https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2017/ENU/AutoCAD-NET/files/GUID-FAC1A5EB-2D9E-497B-8FD9-E11D2FF87B93-htm.html
-
-            //https://adndevblog.typepad.com/autocad/2012/07/using-readdwgfile-with-net-attachxref-or-objectarx-acdbattachxref.html
-            //Database oldDb = HostApplicationServices.WorkingDatabase; //is it necessary?
 
             // User should input the folder where the dwgs are saved
             PromptResult pr = ed.GetString("\nEnter folder containing DWGs to process: ");
@@ -45,6 +40,9 @@ namespace AttributeUpdater
             foreach (string fileName in dict.Keys)
             {
 
+                //FileInfo fi = new FileInfo($"{ pathName }\\{fileName}.dwg");
+                //string name = fi.Name.Substring(0, fi.Name.Length - 4);
+                //string outputName = fileName.Substring(0, fileName.Length - 4) + "_updated.dwg";
                 string name = fileName;
                 string filePath = $"{pathName}\\{fileName}.dwg";
                 string outputPath = $"{pathName}\\{fileName}_updated.dwg";
@@ -53,105 +51,99 @@ namespace AttributeUpdater
                 //Database db = new Database(false, false);
                 Database db = new Database(false, true);
                 using (db)
-                {
-                    try
                     {
-                        ed.WriteMessage($"\n\nProcessing file: {filePath} ");
-
-                        db.ReadDwgFile(filePath, FileShare.ReadWrite, true, "");
-                        db.CloseInput(true);
-                        //Editor currentOpenEditor = Application.DocumentManager.GetDocument(db).Editor; still the original document editor
-
-                        LayoutManager lm = LayoutManager.Current;
-
-                        lm.CurrentLayout = "Model"; //is it necessary?
-
-                        using (Transaction trans = db.TransactionManager.StartTransaction())
+                        try
                         {
-                            //Attch Xref
-                            string PathName = $"{pathName}\\{dict[name][10]}";
-                            ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
+                            ed.WriteMessage($"\n\nProcessing file: {filePath} ");
 
-                            //HostApplicationServices.WorkingDatabase = db; Not in the first link
+                            db.ReadDwgFile(filePath, FileShare.ReadWrite, false, "");
+                            db.CloseInput(true);
+                            //Editor currentOpenEditor = Application.DocumentManager.GetDocument(db).Editor; still the original document editor
+                            
+                            LayoutManager lm = LayoutManager.Current;
 
-                            if (!acXrefId.IsNull)
+                            lm.CurrentLayout = "Model";
+
+                            using (Transaction trans = db.TransactionManager.StartTransaction())
                             {
-                                // Attach the DWG reference to the current space
-                                Point3d insPt = new Point3d(0, 0, 0);
-                                using (BlockReference blockRef = new BlockReference(insPt, acXrefId))
-                                {
-                                    //blockRef.Layer = "0";
-                                    BlockTable blocktable = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                                    BlockTableRecord modelSpace = trans.GetObject(blocktable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-                                    modelSpace.AppendEntity(blockRef);
+                                //Attch Xref
+                                string PathName = $"{pathName}\\{dict[name][10]}";
+                                ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
 
-                                    trans.AddNewlyCreatedDBObject(blockRef, true);
+                                if (!acXrefId.IsNull)
+                                {
+                                    // Attach the DWG reference to the current space
+                                    Point3d insPt = new Point3d(0, 0, 0);
+                                    using (BlockReference acBlkRef = new BlockReference(insPt, acXrefId))
+                                    {
+                                        BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                                        BlockTableRecord modelSpace = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                                        modelSpace.AppendEntity(acBlkRef);
+
+                                        trans.AddNewlyCreatedDBObject(acBlkRef, true);
+                                    }
                                 }
+
+                                lm.CurrentLayout = "Layout1";
+
+                                //forms.MessageBox.Show(lm.CurrentLayout);
+
+                                string currentLo = lm.CurrentLayout;
+
+                                DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
+
+                                Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
+                            
+                                foreach (ObjectId ID in CurrentLo.GetViewports())
+                                {
+                                    Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
+
+                                    Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
+
+                                    Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
+
+                                    double degrees = DegToRad(double.Parse(dict[name][4]));
+                                    double vpWidht = double.Parse(dict[name][8]);
+                                    double vpHeight = double.Parse(dict[name][9]);
+
+                                    if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
+                                {
+                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees,vpWidht, vpHeight);
+                                    }
+                                    else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
+                                    {
+                                        UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                                    }
+                                }
+
+                                trans.Commit();
                             }
 
-                            lm.CurrentLayout = "Layout1";
-
-                            //forms.MessageBox.Show(lm.CurrentLayout);
-
-                            string currentLo = lm.CurrentLayout;
-
-                            DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
-
-                            Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
-
-                            foreach (ObjectId ID in CurrentLo.GetViewports())
-                            {
-                                Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
-
-                                Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
-
-                                Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
-
-                                double degrees = DegToRad(double.Parse(dict[name][4]));
-                                double vpWidht = double.Parse(dict[name][8]);
-                                double vpHeight = double.Parse(dict[name][9]);
-
-                                if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
-                                {
-                                    UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
-                                }
-                                else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
-                                {
-                                    UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
-                                }
-                            }
-
-                            //Purge unused layers
-                            PurgeUnusedLayers(trans, db);
-
-                            trans.Commit();
-                        }
-
-                        BindXrefs(db);
+                            BindXrefs(db);
 
                         //currentOpenEditor.Command("_.ZOOM","e");
+
 
                         db.Audit(true, true);
 
 
-                        //HostApplicationServices.WorkingDatabase = oldDb;
 
-                        ed.WriteMessage("\nSaving to file: {0}", outputPath);
+                            ed.WriteMessage("\nSaving to file: {0}", outputPath);
 
-                        db.SaveAs(outputPath, DwgVersion.Current);
+                            db.SaveAs(outputPath, DwgVersion.Current);
 
-                        saved++;
+                            saved++;
 
-                        processed++;
+                            processed++;
+                        }
+                        catch (System.Exception ex)
+                        {
+                            ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
+
+                            problem++;
+                        }
                     }
-                    catch (System.Exception ex)
-                    {
-                        ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
-
-                        problem++;
-                    }
-                }
-
+                
             }
             ed.WriteMessage(
               "\n\nSuccessfully processed {0} files, of which {1} had " +
@@ -164,43 +156,6 @@ namespace AttributeUpdater
         }
 
 
-        //https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2016/ENU/AutoCAD-NET/files/GUID-288B4394-C51F-48CC-8B8C-A27873CFFDC1-htm.html
-        public void PurgeUnusedLayers(Transaction acTrans, Database acCurDb)
-        {
-            LayerTable acLyrTbl;
-
-            acLyrTbl = acTrans.GetObject(acCurDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-            // Create an ObjectIdCollection to hold the object ids for each table record
-            ObjectIdCollection acObjIdColl = new ObjectIdCollection();
-
-            // Step through each layer and add iterator to the ObjectIdCollection
-            foreach (ObjectId acObjId in acLyrTbl)
-            {
-                acObjIdColl.Add(acObjId);
-            }
-
-            // Remove the layers that are in use and return the ones that can be erased
-            acCurDb.Purge(acObjIdColl);
-
-            // Step through the returned ObjectIdCollection
-            // and erase each unreferenced layer
-            foreach (ObjectId acObjId in acObjIdColl)
-            {
-                SymbolTableRecord acSymTblRec;
-                acSymTblRec = acTrans.GetObject(acObjId, OpenMode.ForWrite) as SymbolTableRecord;
-                try
-                {
-                    // Erase the unreferenced layer
-                    acSymTblRec.Erase(true);
-                }
-                catch (Autodesk.AutoCAD.Runtime.Exception Ex)
-                {
-                    // Layer could not be deleted
-                    Application.ShowAlertDialog("Error:\n" + Ex.Message);
-                }
-            }
-        }
 
         public void UpdateViewport(Viewport _vp, Point3d rvtCentre, Point3d rvtCentreWCS, double degrees, double vpWidth, double vpHeight)
         {

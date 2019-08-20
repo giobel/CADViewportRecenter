@@ -80,6 +80,7 @@
       <DependentUpon>ProgressForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewScheduleOption.cs" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\tristan.png" />

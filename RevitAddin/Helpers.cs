@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RevitAddin
 {
@@ -32,7 +33,7 @@ namespace RevitAddin
             return (min0 + max0) / 2;
         }
 
-        public static bool ExportDWG(Document document, Autodesk.Revit.DB.View view, string setupName, string xrefName, string folder)
+        public static bool ExportDWG(Document document, Autodesk.Revit.DB.View view, string setupName, string fileName, string folder)
         {
             bool exported = false;
             // Get the predefined setups and use the one with the given name.
@@ -48,7 +49,7 @@ namespace RevitAddin
                     ICollection<ElementId> views = new List<ElementId>();
                     views.Add(view.Id);
                     // The document has to be saved already, therefore it has a valid PathName.
-                    exported = document.Export(folder, xrefName, views, dwgOptions);
+                    exported = document.Export(folder, fileName, views, dwgOptions);
                     break;
                 }
             }
@@ -98,6 +99,34 @@ namespace RevitAddin
             area *= 3;
 
             return (area == 0) ? XYZ.Zero : new XYZ(x /= area, y /= area, 0);
+        }
+
+        /// <summary>
+        /// Retrieves all View Schedule Options in the Document. Copy paste from Revup
+        /// </summary>
+        public static List<ViewScheduleOption> GetViewScheduleOptions(Document doc)
+        {
+            
+            List<ViewScheduleOption> options = new List<ViewScheduleOption>();
+
+            var collector = new FilteredElementCollector(doc).OfClass(typeof(ViewSchedule));
+            if (collector.Any())
+            {
+                var allNonCategorySchedules = collector.ToElements().Cast<ViewSchedule>().ToList().FindAll(vs => !vs.IsTemplate && vs.Definition.CategoryId == new ElementId(BuiltInCategory.OST_Sheets));
+                if (allNonCategorySchedules.Any())
+                {
+                    foreach (var schedule in allNonCategorySchedules)
+                    {
+                        collector = new FilteredElementCollector(doc, schedule.Id).OfClass(typeof(ViewSheet));
+                        if (collector.Any())
+                        {
+                            options.Add(new ViewScheduleOption() { Name = schedule.ViewName, Views = collector.ToElements().Cast<ViewSheet>().ToList() });
+                        }
+                    }
+                }
+            }
+
+            return options;
         }
 
     }
