@@ -28,9 +28,6 @@ namespace RevitAddin
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
-            IEnumerable<ViewSheet> allSheets = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Sheets)
-                .WhereElementIsNotElementType().ToElements().Cast<ViewSheet>();
-
             //Handling and Dismissing a Warning Message
             //https://thebuildingcoder.typepad.com/blog/2013/03/export-wall-parts-individually-to-dxf.html
             uiapp.DialogBoxShowing += new EventHandler<DialogBoxShowingEventArgs>(OnDialogBoxShowing);
@@ -97,6 +94,8 @@ namespace RevitAddin
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
 
+                    string sheetWithoutArchOrEngViewports = "";
+
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
 
@@ -112,10 +111,11 @@ namespace RevitAddin
                                 //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
 
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
-                                
- 
 
                                 List<ElementId> views = vs.GetAllPlacedViews().ToList();
+
+                                //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
+                                int hasArchOrStrViewports = 0;
 
                                 foreach (ElementId eid in views)
                                 {
@@ -124,16 +124,26 @@ namespace RevitAddin
                                     if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                                     {
                                         planView.IsolateCategoriesTemporary(categoryToIsolate);
+                                        hasArchOrStrViewports += 1;
                                     }
                                 }
 
-                                if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
+                                //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
+                                if (hasArchOrStrViewports != 0)
                                 {
-                                    TaskDialog.Show("Error", "Check that the destination folder exists");
+                                    if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
+                                    {
+                                        TaskDialog.Show("Error", "Check that the destination folder exists");
+                                    }
+                                    else
+                                    {
+                                        counter += 1;
+                                    }
                                 }
                                 else
                                 {
-                                    counter += 1;
+                                    sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";
+
                                 }
 
                                 pf.Increment();
@@ -141,11 +151,10 @@ namespace RevitAddin
 
                             t.RollBack();
                         }//close using transaction
-
                     }
+                    TaskDialog.Show("Done", $"{counter} sheets have been exported. {sheetWithoutArchOrEngViewports} did not have any" +
+        $"FloorPlan, CeilingPlan or EngineeringPlan in it and have not been exported.");
                 }//close using form
-
-                TaskDialog.Show("Done", $"{counter} sheets have been exported");
                 return Result.Succeeded;
             }
             catch (Exception ex)

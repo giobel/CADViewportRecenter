@@ -39,7 +39,7 @@
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2018\Revit.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationIcon>Images\favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -63,38 +63,47 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
-    <Compile Include="ExportXrefs.cs" />
-    <Compile Include="ExportSheets.cs" />
-    <Compile Include="FindOversizedViewport.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="Commands\ExportXrefs.cs" />
+    <Compile Include="Commands\ExportSheets.cs" />
+    <Compile Include="Commands\FindOversizedViewport.cs" />
+    <Compile Include="Forms\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
+    <Compile Include="Forms\Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="Helpers.cs" />
-    <Compile Include="ProgressForm.cs">
+    <Compile Include="Forms\OversizedViewportForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ProgressForm.Designer.cs">
+    <Compile Include="Forms\OversizedViewportForm.Designer.cs">
+      <DependentUpon>OversizedViewportForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\Helpers.cs" />
+    <Compile Include="Forms\ProgressForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ProgressForm.Designer.cs">
       <DependentUpon>ProgressForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ViewScheduleOption.cs" />
+    <Compile Include="Helpers\ViewScheduleOption.cs" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\tristan.png" />
-    <Content Include="favicon.ico" />
+    <Content Include="Images\favicon.ico" />
     <Resource Include="Images\sheets.png" />
     <Resource Include="Images\xref.png" />
     <Resource Include="Images\overlap.png" />
     <Content Include="RevitAddin.addin" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Form1.resx">
+    <EmbeddedResource Include="Forms\Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ProgressForm.resx">
+    <EmbeddedResource Include="Forms\OversizedViewportForm.resx">
+      <DependentUpon>OversizedViewportForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ProgressForm.resx">
       <DependentUpon>ProgressForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>

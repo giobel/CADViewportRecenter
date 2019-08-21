@@ -95,6 +95,8 @@ namespace RevitAddin
                     string s = "{0} of " + n.ToString() + " plans exported...";
                     string caption = "Export xrefs";
 
+                    string sheetWithoutArchOrEngViewports = "";
+
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
                         foreach (ViewSheet vs in selectedSheets)
@@ -102,8 +104,6 @@ namespace RevitAddin
                             if (pf.abortFlag)
                                 break;
 
-                            // Find the sheet
-                            //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
 
                             //Collect all the viewports on the sheet
                             ICollection<ElementId> viewportIds = vs.GetAllViewports();
@@ -114,6 +114,9 @@ namespace RevitAddin
                             //Find the viewplan shown in the viewport
                             View vpPlan = null;
 
+                            //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
+                            int hasArchOrStrViewports = 0;
+
                             foreach (ElementId eid in viewportIds)
                             {
                                 Viewport vport = doc.GetElement(eid) as Viewport;
@@ -123,97 +126,104 @@ namespace RevitAddin
                                 {
                                     vp = vport;
                                     vpPlan = planView;
+                                    hasArchOrStrViewports += 1;
                                 }
                             }
 
-                            //Get the current Viewport Centre for Autocad Viewport
-                            XYZ unchangedVPcenter = vp.GetBoxCenter();
 
-                            //Set its Z value to 0
-                            XYZ flattenVPcenter = new XYZ(unchangedVPcenter.X, unchangedVPcenter.Y, 0);
-
-                            //The current Viewport Centre does not match the view center. Hide all the elements in the view and set the annotation crop to the minimum (3mm). Now the 
-                            //Viewport centre will match the View centre. We can then use the unchangedCenter to changedCenter vector to move the view centerpoint to the original
-                            //viewport centre.
-
-                            //Instead of hiding categories, we can isolate an empty one. Check that this category (OST_Loads) exists in the model or it will throw an error
-                            ICollection<ElementId> categoryToIsolate = new List<ElementId>();
-                            Categories groups = doc.Settings.Categories;
-                            categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
-
-                            //This is the new Viewport centre, aligned with the View centre
-                            XYZ changedVPcenter = null;
-
-                            // This is the View centre
-                            XYZ centroid = null;
-
-                            double scale = 304.8;
-
-                            using (Transaction t = new Transaction(doc, "Hide categories"))
+                            if (hasArchOrStrViewports != 0)
                             {
-                                t.Start();
 
-                                vpPlan.IsolateCategoriesTemporary(categoryToIsolate);
+                                //Get the current Viewport Centre for Autocad Viewport
+                                XYZ unchangedVPcenter = vp.GetBoxCenter();
 
-                                //Use the annotation crop region to find the view centroid
-                                ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
-                                //Set the annotation offset to the minimum (3mm)
-                                vcr.BottomAnnotationCropOffset = 3 / scale;
-                                vcr.TopAnnotationCropOffset = 3 / scale;
-                                vcr.LeftAnnotationCropOffset = 3 / scale;
-                                vcr.RightAnnotationCropOffset = 3 / scale;
-                                //Get the Viewport Center. This will match the View centroid
-                                changedVPcenter = vp.GetBoxCenter();
+                                //Set its Z value to 0
+                                XYZ flattenVPcenter = new XYZ(unchangedVPcenter.X, unchangedVPcenter.Y, 0);
 
-                                //Find the view centroid using the annotation crop shape (it should always be a rectangle, while the cropbox shape can be a polygon).
-                                CurveLoop cloop = vcr.GetAnnotationCropShape();
-                                List<XYZ> pts = new List<XYZ>();
+                                //The current Viewport Centre does not match the view center. Hide all the elements in the view and set the annotation crop to the minimum (3mm). Now the 
+                                //Viewport centre will match the View centre. We can then use the unchangedCenter to changedCenter vector to move the view centerpoint to the original
+                                //viewport centre.
 
-                                foreach (Curve crv in cloop)
+                                //Instead of hiding categories, we can isolate an empty one. Check that this category (OST_Loads) exists in the model or it will throw an error
+                                ICollection<ElementId> categoryToIsolate = new List<ElementId>();
+                                Categories groups = doc.Settings.Categories;
+                                categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
+
+                                //This is the new Viewport centre, aligned with the View centre
+                                XYZ changedVPcenter = null;
+
+                                // This is the View centre
+                                XYZ centroid = null;
+
+                                double scale = 304.8;
+
+                                using (Transaction t = new Transaction(doc, "Hide categories"))
                                 {
-                                    pts.Add(crv.GetEndPoint(0));
-                                    pts.Add(crv.GetEndPoint(1));
+                                    t.Start();
+
+                                    vpPlan.IsolateCategoriesTemporary(categoryToIsolate);
+
+                                    //Use the annotation crop region to find the view centroid
+                                    ViewCropRegionShapeManager vcr = vpPlan.GetCropRegionShapeManager();
+                                    //Set the annotation offset to the minimum (3mm)
+                                    vcr.BottomAnnotationCropOffset = 3 / scale;
+                                    vcr.TopAnnotationCropOffset = 3 / scale;
+                                    vcr.LeftAnnotationCropOffset = 3 / scale;
+                                    vcr.RightAnnotationCropOffset = 3 / scale;
+                                    //Get the Viewport Center. This will match the View centroid
+                                    changedVPcenter = vp.GetBoxCenter();
+
+                                    //Find the view centroid using the annotation crop shape (it should always be a rectangle, while the cropbox shape can be a polygon).
+                                    CurveLoop cloop = vcr.GetAnnotationCropShape();
+                                    List<XYZ> pts = new List<XYZ>();
+
+                                    foreach (Curve crv in cloop)
+                                    {
+                                        pts.Add(crv.GetEndPoint(0));
+                                        pts.Add(crv.GetEndPoint(1));
+                                    }
+
+                                    //View centroid with elements hidden
+                                    centroid = Helpers.GetCentroid(pts, pts.Count);
+
+                                    t.RollBack();
                                 }
 
-                                //View centroid with elements hidden
-                                centroid = Helpers.GetCentroid(pts, pts.Count);
+                                //Set ChangedVP center Z value to 0
+                                XYZ flattenChangedVPcenter = new XYZ(changedVPcenter.X, changedVPcenter.Y, 0);
 
-                                t.RollBack();
-                            }
+                                //This is the vector from the Viewport original centre to Viewport centre with all the elements hidden and the cropbox set to 3mm evenly
+                                XYZ viewPointsVector = (flattenVPcenter - flattenChangedVPcenter) * vpPlan.Scale;
 
-                            //Set ChangedVP center Z value to 0
-                            XYZ flattenChangedVPcenter = new XYZ(changedVPcenter.X, changedVPcenter.Y, 0);
+                                //View center adjusted to Viewport original centre (the one to be used in Autocad)
+                                XYZ translatedCentroid = centroid + viewPointsVector;
 
-                            //This is the vector from the Viewport original centre to Viewport centre with all the elements hidden and the cropbox set to 3mm evenly
-                            XYZ viewPointsVector = (flattenVPcenter - flattenChangedVPcenter) * vpPlan.Scale;
+                                //View center per Survey Point coordinates
+                                XYZ viewCentreWCS = ttr.OfPoint(translatedCentroid);
 
-                            //View center adjusted to Viewport original centre (the one to be used in Autocad)
-                            XYZ translatedCentroid = centroid + viewPointsVector;
+                                //Viewport outline width and height to be used to update the autocad viewport
+                                XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
+                                XYZ minPt = vp.GetBoxOutline().MinimumPoint;
+                                int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
+                                int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
 
-                            //View center per Survey Point coordinates
-                            XYZ viewCentreWCS = ttr.OfPoint(translatedCentroid);
+                                //Sheet filename
+                                string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
+                                //Suffix to xref
+                                string xrefName = vs.SheetNumber + "-xref";
 
-                            //Viewport outline width and height to be used to update the autocad viewport
-                            XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
-                            XYZ minPt = vp.GetBoxOutline().MinimumPoint;
-                            int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
-                            int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
 
-                            //Sheet filename
-                            string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
-                            //Suffix to xref
-                            string xrefName = vs.SheetNumber + "-xref";
 
-                            if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
-                            {
-                                TaskDialog.Show("Error", "Check that the destination folder exists");
-                            }
-                            else
-                            {
-                                counter += 1;
-                            }
+                                if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
+                                {
+                                    TaskDialog.Show("Error", "Check that the destination folder exists");
+                                }
+                                else
+                                {
+                                    counter += 1;
+                                }
 
-                            sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
+                                sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
                                                     fileName,
                                                     Helpers.PointToString(viewCentreWCS),
                                                     projPosition.Angle * 180 / Math.PI,
@@ -223,13 +233,23 @@ namespace RevitAddin
                                                     xrefName
                                                    )
                                                    );
+
+                            }
+                            else
+                            {
+                                sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";
+                            }
+
+
+
                             pf.Increment();
                         }
                     }
                     File.WriteAllText($"{destinationFolder}\\{outputFile}", sb.ToString());
 
-                    TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created");
-                }
+                    TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created. {sheetWithoutArchOrEngViewports} did not have any" +
+                        $"FloorPlan, CeilingPlan or EngineeringPlan in it and have not been exported.");
+                }//close form
                 return Result.Succeeded;
             }
             catch (Exception ex)

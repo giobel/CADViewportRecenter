@@ -1,5 +1,4 @@
-﻿using Autodesk.Revit.DB;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using winform = System.Windows.Forms;
 
@@ -9,7 +8,7 @@ namespace RevitAddin
     {
         public string tBoxDestinationFolder { get; private set; }
         public string tBoxExportSettings { get; private set; }
-        public List<ViewSheet> tboxSelectedSheets { get; private set; }
+        public List<Autodesk.Revit.DB.ViewSheet> tboxSelectedSheets { get; private set; }
         public IList<string> cboxExportSettingsDataSource { get; set; }
         public List<ViewScheduleOption> cboxSheetDataSource { get; set; }
         private ViewScheduleOption vso = null;

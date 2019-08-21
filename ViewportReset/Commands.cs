@@ -8,6 +8,7 @@ using forms = System.Windows.Forms;
 using System.Linq;
 using Autodesk.AutoCAD.Geometry;
 using System.Reflection;
+using Autodesk.AutoCAD.PlottingServices;
 
 namespace AttributeUpdater
 {
@@ -23,6 +24,8 @@ namespace AttributeUpdater
 
             //https://adndevblog.typepad.com/autocad/2012/07/using-readdwgfile-with-net-attachxref-or-objectarx-acdbattachxref.html
             //Database oldDb = HostApplicationServices.WorkingDatabase; //is it necessary?
+
+            
 
             // User should input the folder where the dwgs are saved
             PromptResult pr = ed.GetString("\nEnter folder containing DWGs to process: ");
@@ -60,7 +63,6 @@ namespace AttributeUpdater
 
                         db.ReadDwgFile(filePath, FileShare.ReadWrite, true, "");
                         db.CloseInput(true);
-                        //Editor currentOpenEditor = Application.DocumentManager.GetDocument(db).Editor; still the original document editor
 
                         LayoutManager lm = LayoutManager.Current;
 
@@ -72,7 +74,7 @@ namespace AttributeUpdater
                             string PathName = $"{pathName}\\{dict[name][10]}";
                             ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
 
-                            //HostApplicationServices.WorkingDatabase = db; Not in the first link
+
 
                             if (!acXrefId.IsNull)
                             {
@@ -98,6 +100,8 @@ namespace AttributeUpdater
                             DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
 
                             Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
+
+                            
 
                             foreach (ObjectId ID in CurrentLo.GetViewports())
                             {
@@ -132,9 +136,6 @@ namespace AttributeUpdater
                         //currentOpenEditor.Command("_.ZOOM","e");
 
                         db.Audit(true, true);
-
-
-                        //HostApplicationServices.WorkingDatabase = oldDb;
 
                         ed.WriteMessage("\nSaving to file: {0}", outputPath);
 
@@ -214,6 +215,7 @@ namespace AttributeUpdater
 
             TwistViewport(_vp.Id, rvtCentreWCS, degrees);
         }
+
         public void BindXrefs(Database db)
 
         {
@@ -401,6 +403,140 @@ namespace AttributeUpdater
                 //vport.Locked = true;
 
                 tran.Commit();
+            }
+        }
+
+
+
+        // overload no scale factor or set the view - just make the layout
+        public void LayoutAndViewport(Database db, string layoutName, out ObjectId rvpid, string deviceName, string mediaName, out ObjectId id)
+        {
+            // set default values
+            rvpid = new ObjectId();
+            bool flagVp = false; // flag to create a new floating view port
+            double viewSize = (double)Application.GetSystemVariable("VIEWSIZE");
+            double height = viewSize;
+            double width = viewSize;
+            Point2d loCenter = new Point2d(); // layout center point
+            Point2d vpLowerCorner = new Point2d();
+            Point2d vpUpperCorner = new Point2d();
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            LayoutManager lm = LayoutManager.Current;
+            id = lm.CreateLayout(layoutName);
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                Layout lo = tr.GetObject(id, OpenMode.ForWrite, false) as Layout;
+                if (lo != null)
+                {
+                    lm.CurrentLayout = lo.LayoutName; // make it current!
+
+                    #region do some plotting settings here for the paper size...
+                    ObjectId loid = lm.GetLayoutId(lo.LayoutName);
+
+                    PlotInfo pi = new PlotInfo();
+                    pi.Layout = loid;
+
+                    PlotSettings ps = new PlotSettings(false);
+                    PlotSettingsValidator psv = PlotSettingsValidator.Current;
+
+                    psv.RefreshLists(ps);
+                    psv.SetPlotConfigurationName(ps, deviceName, mediaName);
+                    psv.SetPlotType(ps, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
+                    psv.SetPlotPaperUnits(ps, PlotPaperUnit.Inches);
+                    psv.SetUseStandardScale(ps, true);
+                    psv.SetStdScaleType(ps, StdScaleType.ScaleToFit); // use this as default
+
+                    pi.OverrideSettings = ps;
+
+                    PlotInfoValidator piv = new PlotInfoValidator();
+                    piv.Validate(pi);
+
+                    lo.CopyFrom(ps);
+
+                    PlotConfig pc = PlotConfigManager.CurrentConfig;
+                    // returns data in millimeters...
+                    MediaBounds mb = pc.GetMediaBounds(mediaName);
+
+                    Point2d p1 = mb.LowerLeftPrintableArea;
+                    Point2d p3 = mb.UpperRightPrintableArea;
+                    Point2d p2 = new Point2d(p3.X, p1.Y);
+                    Point2d p4 = new Point2d(p1.X, p3.Y);
+
+                    // convert millimeters to inches
+                    double mm2inch = 25.4;
+                    height = p1.GetDistanceTo(p4) / mm2inch;
+                    width = p1.GetDistanceTo(p2) / mm2inch;
+
+                    vpLowerCorner = lo.PlotOrigin;
+                    vpUpperCorner = new Point2d(vpLowerCorner.X + width, vpLowerCorner.Y + height);
+                    LineSegment2d seg = new LineSegment2d(vpLowerCorner, vpUpperCorner);
+                    loCenter = seg.MidPoint;
+                    #endregion
+
+                    if (lo.GetViewports().Count == 1) // Viewport was not created by default
+                    {
+                        // the create by default view ports on new layouts it 
+                        // is off we need to mark a flag to generate a new one
+                        // in another transaction - out of this one
+                        flagVp = true;
+                    }
+                    else if (lo.GetViewports().Count == 2) // create Viewports by default it is on
+                    {
+                        // extract the last item from the collection
+                        // of view ports inside of the layout
+                        int i = lo.GetViewports().Count - 1;
+                        ObjectId vpId = lo.GetViewports()[i];
+
+                        if (!vpId.IsNull)
+                        {
+                            Viewport vp = tr.GetObject(vpId, OpenMode.ForWrite, false) as Viewport;
+                            if (vp != null)
+                            {
+                                vp.Height = height; // change height
+                                vp.Width = width; // change width
+                                vp.CenterPoint = new Point3d(loCenter.X, loCenter.Y, 0.0); // change center
+                                //vp.ColorIndex = 1; // debug
+
+                                // zoom to the Viewport extents
+                                Zoom(new Point3d(vpLowerCorner.X, vpLowerCorner.Y, 0.0),
+                                    new Point3d(vpUpperCorner.X, vpUpperCorner.Y, 0.0), new Point3d(), 1.0);
+
+                                rvpid = vp.ObjectId; // return the output ObjectId to out...
+                            }
+                        }
+                    }
+                }
+                tr.Commit();
+            } // end of transaction
+
+            // we need another transaction to create a new paper space floating Viewport
+            if (flagVp)
+            {
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    BlockTableRecord btr_ps = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.PaperSpace], OpenMode.ForWrite);
+
+                    Viewport vp = new Viewport();
+                    vp.Height = height; // set the height
+                    vp.Width = width; // set the width
+                    vp.CenterPoint = new Point3d(loCenter.X, loCenter.Y, 0.0); // set the center
+                    //vp.ColorIndex = 2; // debug
+
+                    btr_ps.AppendEntity(vp);
+                    tr.AddNewlyCreatedDBObject(vp, true);
+
+                    vp.On = true; // make it accessible!
+
+                    // zoom to the Viewport extents
+                    Zoom(new Point3d(vpLowerCorner.X, vpLowerCorner.Y, 0.0),
+                        new Point3d(vpUpperCorner.X, vpUpperCorner.Y, 0.0), new Point3d(), 1.0);
+
+                    rvpid = vp.ObjectId; // return the ObjectId to the out...
+
+                    tr.Commit();
+                } // end of transaction
             }
         }
 
