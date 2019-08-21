@@ -64,7 +64,7 @@ namespace RevitAddin
             string ptY = Convert.ToInt32(UnitUtils.ConvertFromInternalUnits(point.Y, DisplayUnitType.DUT_MILLIMETERS)).ToString();
             string ptZ = Convert.ToInt32(UnitUtils.ConvertFromInternalUnits(point.Z, DisplayUnitType.DUT_MILLIMETERS)).ToString();
 
-            return String.Format("{0},{1},0", ptX, ptY);
+            return String.Format("{0},{1},{2}", ptX, ptY, ptZ);
         }
 
         public static XYZ PointFlatten(XYZ point)

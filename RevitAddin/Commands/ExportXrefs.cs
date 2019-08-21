@@ -122,7 +122,7 @@ namespace RevitAddin
                                 Viewport vport = doc.GetElement(eid) as Viewport;
                                 View planView = doc.GetElement(vport.ViewId) as View;
 
-                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
+                                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
                                 {
                                     viewportViewDict.Add(vport, planView);
                                     //vpPlan.Add(planView);
@@ -135,7 +135,8 @@ namespace RevitAddin
                             {
                                 //Sheet filename
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
-                                
+
+                                XYZ centroidCheck = null;
 
                                 foreach (Viewport vp in viewportViewDict.Keys)
                                 {
@@ -205,6 +206,8 @@ namespace RevitAddin
                                     //View center per Survey Point coordinates
                                     XYZ viewCentreWCS = ttr.OfPoint(translatedCentroid);
 
+                                    XYZ viewCentreWCSZ = new XYZ(viewCentreWCS.X, viewCentreWCS.Y, vpPlan.get_BoundingBox(vpPlan).Transform.Origin.Z);
+
                                     //Viewport outline width and height to be used to update the autocad viewport
                                     XYZ maxPt = vp.GetBoxOutline().MaximumPoint;
                                     XYZ minPt = vp.GetBoxOutline().MinimumPoint;
@@ -227,7 +230,7 @@ namespace RevitAddin
 
                                     sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
                                                     fileName,
-                                                    Helpers.PointToString(viewCentreWCS),
+                                                    Helpers.PointToString(viewCentreWCSZ),
                                                     projPosition.Angle * 180 / Math.PI,
                                                     Helpers.PointToString(flattenVPcenter),
                                                     width.ToString(),

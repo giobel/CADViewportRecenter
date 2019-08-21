@@ -54,8 +54,8 @@ namespace AttributeUpdater
 
             foreach (string[] item in logFile)
             {
-                XYZ vc = new XYZ(Convert.ToDouble(item[1]), Convert.ToDouble(item[2]), 0);
-                XYZ vpCentre = new XYZ(Convert.ToDouble(item[5]), Convert.ToDouble(item[6]), 0);
+                XYZ vc = new XYZ(Convert.ToDouble(item[1]), Convert.ToDouble(item[2]), Convert.ToDouble(item[3]));
+                XYZ vpCentre = new XYZ(Convert.ToDouble(item[5]), Convert.ToDouble(item[6]), Convert.ToDouble(item[7]));
 
                 sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10]));
             }
@@ -95,7 +95,7 @@ namespace AttributeUpdater
                             if (!acXrefId.IsNull)
                             {
                                 // Attach the DWG reference to the current space
-                                Point3d insPt = new Point3d(0, 0, 0);
+                                Point3d insPt = new Point3d(0, 0, sheetObject.viewCentre.z);
                                 using (BlockReference blockRef = new BlockReference(insPt, acXrefId))
                                 {
                                     //blockRef.Layer = "0";
@@ -126,8 +126,9 @@ namespace AttributeUpdater
                                 Point3d revitViewportCentre = new Point3d(vpCentre.x, vpCentre.y, 0);
 
                                 //Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
-                                XYZ revitViewCentre = sheetObject.viewCentre;
-                                Point3d revitViewCentreWCS = new Point3d(revitViewCentre.x, revitViewCentre.y, 0);
+                                XYZ _revitViewCentreWCS = sheetObject.viewCentre;
+                                //Point3d revitViewCentreWCS = new Point3d(revitViewCentre.x, revitViewCentre.y, 0);
+                                Point3d revitViewCentreWCS = new Point3d(_revitViewCentreWCS.x, _revitViewCentreWCS.y, _revitViewCentreWCS.z);
 
                                 //double degrees = DegToRad(double.Parse(dict[name][4]));
                                 double degrees = DegToRad(sheetObject.angleToNorth);
@@ -232,6 +233,8 @@ namespace AttributeUpdater
             _vp.Width = vpWidth; //set the width to match the revit width
             _vp.Height = vpHeight; //idem
             _vp.CustomScale = cs;
+            _vp.BackClipOn = true;
+            _vp.FrontClipOn = true;
             //VP.Erase();
 
             TwistViewport(_vp.Id, rvtCentreWCS, degrees);
@@ -411,7 +414,6 @@ namespace AttributeUpdater
 
         private static void TwistViewport(ObjectId vpId, Point3d target, double angle)
         {
-
 
             using (Transaction tran = vpId.Database.TransactionManager.StartTransaction())
             {
