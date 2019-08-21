@@ -152,8 +152,7 @@ namespace RevitAddin
                             t.RollBack();
                         }//close using transaction
                     }
-                    TaskDialog.Show("Done", $"{counter} sheets have been exported. {sheetWithoutArchOrEngViewports} did not have any" +
-        $"FloorPlan, CeilingPlan or EngineeringPlan in it and have not been exported.");
+                    TaskDialog.Show("Done", $"{counter} sheets have been exported.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
                 }//close using form
                 return Result.Succeeded;
             }

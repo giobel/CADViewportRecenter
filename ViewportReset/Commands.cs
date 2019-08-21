@@ -9,6 +9,7 @@ using System.Linq;
 using Autodesk.AutoCAD.Geometry;
 using System.Reflection;
 using Autodesk.AutoCAD.PlottingServices;
+using System.Collections.Generic;
 
 namespace AttributeUpdater
 {
@@ -41,16 +42,31 @@ namespace AttributeUpdater
             // of how the processing is going
             int processed = 0, saved = 0, problem = 0;
 
-            var dict = File.ReadLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToDictionary(line => line[0], line => line.ToList());
+            //var dict = File.ReadLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToDictionary(line => line[0], line => line.ToList());
 
-            dict.Remove(dict.Keys.First()); //remove the csv header
+            //dict.Remove(dict.Keys.First()); //remove the csv header
 
-            foreach (string fileName in dict.Keys)
+            //using a Sheet Object
+            var logFile = File.ReadAllLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToList<string[]>();
+            logFile.RemoveAt(0);
+
+            List<SheetObject> sheetsList = new List<SheetObject>();
+
+            foreach (string[] item in logFile)
+            {
+                XYZ vc = new XYZ(Convert.ToDouble(item[1]), Convert.ToDouble(item[2]), 0);
+                XYZ vpCentre = new XYZ(Convert.ToDouble(item[5]), Convert.ToDouble(item[6]), 0);
+
+                sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10]));
+            }
+
+            //foreach (string fileName in dict.Keys)
+            foreach (SheetObject sheetObject in sheetsList)
             {
 
-                string name = fileName;
-                string filePath = $"{pathName}\\{fileName}.dwg";
-                string outputPath = $"{pathName}\\{fileName}_updated.dwg";
+                string name = sheetObject.sheetName;
+                string filePath = $"{pathName}\\{sheetObject.sheetName}.dwg";
+                string outputPath = $"{pathName}\\{sheetObject.sheetName}.dwg";
 
 
                 //Database db = new Database(false, false);
@@ -71,11 +87,11 @@ namespace AttributeUpdater
                         using (Transaction trans = db.TransactionManager.StartTransaction())
                         {
                             //Attch Xref
-                            string PathName = $"{pathName}\\{dict[name][10]}";
-                            ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
-
-
-
+                            //string PathName = $"{pathName}\\{dict[name][10]}";
+                            string PathName = $"{pathName}\\{sheetObject.xrefName}";
+                            //ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
+                            ObjectId acXrefId = db.AttachXref(PathName, sheetObject.xrefName);
+                            
                             if (!acXrefId.IsNull)
                             {
                                 // Attach the DWG reference to the current space
@@ -100,20 +116,25 @@ namespace AttributeUpdater
                             DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
 
                             Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
-
                             
-
                             foreach (ObjectId ID in CurrentLo.GetViewports())
                             {
                                 Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
 
-                                Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
+                                //Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
+                                XYZ vpCentre = sheetObject.viewportCentre;
+                                Point3d revitViewportCentre = new Point3d(vpCentre.x, vpCentre.y, 0);
 
-                                Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
+                                //Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
+                                XYZ revitViewCentre = sheetObject.viewCentre;
+                                Point3d revitViewCentreWCS = new Point3d(revitViewCentre.x, revitViewCentre.y, 0);
 
-                                double degrees = DegToRad(double.Parse(dict[name][4]));
-                                double vpWidht = double.Parse(dict[name][8]);
-                                double vpHeight = double.Parse(dict[name][9]);
+                                //double degrees = DegToRad(double.Parse(dict[name][4]));
+                                double degrees = DegToRad(sheetObject.angleToNorth);
+                                //double vpWidht = double.Parse(dict[name][8]);
+                                double vpWidht = sheetObject.viewportWidth;
+                                //double vpHeight = double.Parse(dict[name][9]);
+                                double vpHeight = sheetObject.viewportHeight;
 
                                 if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
                                 {
@@ -147,7 +168,7 @@ namespace AttributeUpdater
                     }
                     catch (System.Exception ex)
                     {
-                        ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", fileName, ex.Message);
+                        ed.WriteMessage("\nProblem processing file: {0} - \"{1}\"", sheetObject.sheetName, ex.Message);
 
                         problem++;
                     }

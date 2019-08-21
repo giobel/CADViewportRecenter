@@ -135,7 +135,7 @@ namespace RevitAddin
 
                     TaskDialog myDialog = new TaskDialog("Summary");
                     myDialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                    myDialog.MainContent = $"Operation completed. {countOversizedViewports} viewports are larger than the sheet.";
+                    myDialog.MainContent = $"Operation completed. {countOversizedViewports} viewports are oversized.";
 
                     myDialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink4, $"Open Log File {outputFile}", "");
 
