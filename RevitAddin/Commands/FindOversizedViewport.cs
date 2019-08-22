@@ -27,7 +27,7 @@ namespace RevitAddin
                 Application app = uiapp.Application;
                 Document doc = uidoc.Document;
 
-                string outputFile = @"C:\Temp\report.csv";
+                string outputFile = @"C:\Temp\reportOversizedVP.csv";
 
                 StringBuilder sb = new StringBuilder();
 
@@ -148,8 +148,8 @@ namespace RevitAddin
                         process.Start();
                     }
                     return Result.Succeeded;
-                }
-            }//close form
+                }//close form
+            }//close try
             catch (Exception ex)
             {
                 TaskDialog.Show("Result", ex.Message);

@@ -65,12 +65,19 @@
     <Compile Include="App.cs" />
     <Compile Include="Commands\ExportXrefs.cs" />
     <Compile Include="Commands\ExportSheets.cs" />
+    <Compile Include="Commands\SheetSummary.cs" />
     <Compile Include="Commands\FindOversizedViewport.cs" />
     <Compile Include="Forms\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\OverlapViewportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\OverlapViewportForm.Designer.cs">
+      <DependentUpon>OverlapViewportForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\OversizedViewportForm.cs">
       <SubType>Form</SubType>
@@ -90,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\tristan.png" />
+    <Resource Include="Images\checkSheet.png" />
     <Content Include="Images\favicon.ico" />
     <Resource Include="Images\sheets.png" />
     <Resource Include="Images\xref.png" />
@@ -99,6 +107,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Forms\Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\OverlapViewportForm.resx">
+      <DependentUpon>OverlapViewportForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\OversizedViewportForm.resx">
       <DependentUpon>OversizedViewportForm.cs</DependentUpon>

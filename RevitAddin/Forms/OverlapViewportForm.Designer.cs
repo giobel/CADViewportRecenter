@@ -1,6 +1,6 @@
 ﻿namespace RevitAddin
 {
-    partial class OversizedViewportForm
+    partial class OverlapViewportForm
     {
         /// <summary>
         /// Required designer variable.
@@ -33,10 +33,6 @@
             this.comboBoxSheetsSchedules = new System.Windows.Forms.ComboBox();
             this.Cancel = new System.Windows.Forms.Button();
             this.buttonOk = new System.Windows.Forms.Button();
-            this.textBoxWidth = new System.Windows.Forms.TextBox();
-            this.textBoxHeight = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
             this.labelSelectedSheets = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
@@ -88,67 +84,29 @@
             this.buttonOk.UseVisualStyleBackColor = true;
             this.buttonOk.Click += new System.EventHandler(this.buttonOk_Click);
             // 
-            // textBoxWidth
-            // 
-            this.textBoxWidth.Location = new System.Drawing.Point(12, 75);
-            this.textBoxWidth.Name = "textBoxWidth";
-            this.textBoxWidth.Size = new System.Drawing.Size(50, 20);
-            this.textBoxWidth.TabIndex = 22;
-            this.textBoxWidth.Text = "823";
-            // 
-            // textBoxHeight
-            // 
-            this.textBoxHeight.Location = new System.Drawing.Point(77, 75);
-            this.textBoxHeight.Name = "textBoxHeight";
-            this.textBoxHeight.Size = new System.Drawing.Size(50, 20);
-            this.textBoxHeight.TabIndex = 23;
-            this.textBoxHeight.Text = "482";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 56);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(58, 13);
-            this.label2.TabIndex = 24;
-            this.label2.Text = "Max Width";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(74, 56);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(61, 13);
-            this.label3.TabIndex = 25;
-            this.label3.Text = "Max Height";
-            // 
             // labelSelectedSheets
             // 
             this.labelSelectedSheets.AutoSize = true;
-            this.labelSelectedSheets.Location = new System.Drawing.Point(242, 30);
+            this.labelSelectedSheets.Location = new System.Drawing.Point(9, 56);
             this.labelSelectedSheets.Name = "labelSelectedSheets";
             this.labelSelectedSheets.Size = new System.Drawing.Size(62, 13);
             this.labelSelectedSheets.TabIndex = 26;
             this.labelSelectedSheets.Text = "placeholder";
             // 
-            // OversizedViewportForm
+            // OverlapViewportForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(448, 130);
             this.Controls.Add(this.labelSelectedSheets);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.textBoxHeight);
-            this.Controls.Add(this.textBoxWidth);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.comboBoxSheetsSchedules);
             this.Controls.Add(this.Cancel);
             this.Controls.Add(this.buttonOk);
-            this.Name = "OversizedViewportForm";
+            this.Name = "OverlapViewportForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Check Oversized Viewports";
+            this.Text = "Check Overlapping Viewports";
             this.Load += new System.EventHandler(this.OversizedViewportForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -162,10 +120,6 @@
         private System.Windows.Forms.ComboBox comboBoxSheetsSchedules;
         private System.Windows.Forms.Button Cancel;
         private System.Windows.Forms.Button buttonOk;
-        private System.Windows.Forms.TextBox textBoxWidth;
-        private System.Windows.Forms.TextBox textBoxHeight;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label labelSelectedSheets;
     }
 }

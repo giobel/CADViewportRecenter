@@ -20,13 +20,17 @@ namespace RevitAddin
                 a.CreateRibbonTab("Metro");
 
                 RibbonPanel tools = a.CreateRibbonPanel("Metro", "Tools");
+
+                AddPushButton(tools, "btnSummary", "Check\nSheets", "", "pack://application:,,,/RevitAddin;component/Images/checkSheet.png", "RevitAddin.SheetSummary", "Report sheets without plan views, with overlapping plans or separated plans.");
                 
+                AddPushButton(tools, "btnOversized", "Check\nViewport Size", "", "pack://application:,,,/RevitAddin;component/Images/overlap.png", "RevitAddin.FindOversizedViewport", "Report viewports larger than the sheet.");
+                //Icon made by Swifticons https://www.flaticon.com is licensed by Creative Commons BY 3.0
+
                 AddPushButton(tools, "btnExportSheets", "Export\nSheets", "", "pack://application:,,,/RevitAddin;component/Images/sheets.png", "RevitAddin.ExportSheets", "Export selected sheets to dwg. View plan elements will be temporarily hidden (atm it only processes 1 plan view per sheet).");
 
                 AddPushButton(tools, "btnTristan", "Export\nXrefs+CSV", "", "pack://application:,,,/RevitAddin;component/Images/xref.png", "RevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
                 
-                AddPushButton(tools, "btnOversized", "Check\nViewport Size", "", "pack://application:,,,/RevitAddin;component/Images/overlap.png", "RevitAddin.FindOversizedViewport", "Find viewports larger than the sheet.");
-                //Icon made by Swifticons https://www.flaticon.com is licensed by Creative Commons BY 3.0
+
 
                 return Result.Succeeded;
             }

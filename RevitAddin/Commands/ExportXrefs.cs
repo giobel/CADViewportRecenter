@@ -111,8 +111,6 @@ namespace RevitAddin
                             //Find the viewports that shows a Floor Plan (Architecture) or Structural Plan (Engineering). 
                             Dictionary<Viewport, View> viewportViewDict = new Dictionary<Viewport, View>();
 
-                            //Find the viewplan shown in the viewport
-                            //List<View> vpPlan = new List<View>();
 
                             //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
                             int hasArchOrStrViewports = 0;
@@ -136,7 +134,6 @@ namespace RevitAddin
                                 //Sheet filename
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
 
-                                XYZ centroidCheck = null;
 
                                 foreach (Viewport vp in viewportViewDict.Keys)
                                 {

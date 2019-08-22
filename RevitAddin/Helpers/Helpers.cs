@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RevitAddin
 {
@@ -129,5 +130,84 @@ namespace RevitAddin
             return options;
         }
 
+        public static List<Outline> GetOutline(Document doc, List<View> viewList)
+        {
+            List<Outline> outlines = new List<Outline>();
+
+            foreach (View pView in viewList)
+            {
+                BoundingBoxXYZ bbox = pView.get_BoundingBox(pView);
+                Outline currentOutline = new Outline(bbox.Min, bbox.Max);
+                outlines.Add(currentOutline);
+            }
+            return outlines;
+        }
+
+        /// <summary>
+        /// Check whether a viewport outline intersects a list of other Viewport outlins
+        /// </summary>
+        /// <param name="current">The outline to check</param>
+        /// <param name="check">The list of outlines to be checked against</param>
+        /// <returns></returns>
+        public static bool OutlineIntersects(Outline current, List<Outline> check)
+        {
+            foreach (Outline element in check)
+            {
+                if (current.Intersects(element, 0))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static string CheckVPOverlaps(Document doc, List<View> views)
+        {
+            List<Outline> outlineList = GetOutline(doc, views);
+
+            StringBuilder sb = new StringBuilder();
+
+            Outline current = null;
+
+            int counter = 0;
+
+            while (counter < views.Count)
+            {
+                current = outlineList.First();
+                outlineList.Remove(current);
+
+                if (OutlineIntersects(current, outlineList))
+                {
+                    sb.AppendLine(views.ElementAt(counter).ViewName+ " xref");
+                }
+                else
+                {
+                    sb.AppendLine(views.ElementAt(counter).ViewName + " bind");
+                }
+                counter += 1;
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Loop through all the views placed on a sheet and return a list of plan views only (Floor, Ceiling, Engineering or Area Plan only).
+        /// </summary>
+        /// <param name="planViews"></param>
+        /// <returns></returns>
+        public static List<View> FilterPlanViewport(Document doc, ISet<ElementId> planViewsIds)
+        {
+            List<View> filteredViews = new List<View>();
+
+            foreach (ElementId eid in planViewsIds)
+            {
+                View planView = doc.GetElement(eid) as View;
+                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
+                {
+                    filteredViews.Add(planView);
+                }
+
+            }
+            return filteredViews;
+        }
     }
 }

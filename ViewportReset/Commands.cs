@@ -153,7 +153,7 @@ namespace AttributeUpdater
                             trans.Commit();
                         }
 
-                        BindXrefs(db);
+                        //BindXrefs(db);
 
                         //currentOpenEditor.Command("_.ZOOM","e");
 
