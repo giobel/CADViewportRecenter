@@ -189,6 +189,34 @@ namespace RevitAddin
             return sb.ToString();
         }
 
+        public static bool CheckSingleViewOverlaps(Document doc, View pView, List<View> views)
+        {
+            List<View> updatedViews = new List<View>();
+
+            foreach (View v in views)
+            {
+                if (v.Id != pView.Id)
+                {
+                    updatedViews.Add(v);
+                }
+            }
+
+            List<Outline> outlineList = GetOutline(doc, updatedViews);
+            
+            BoundingBoxXYZ bbox = pView.get_BoundingBox(pView);
+            Outline currentOutline = new Outline(bbox.Min, bbox.Max);
+
+            foreach (Outline item in outlineList)
+            {
+                if (currentOutline.Intersects(item,0))
+                {
+                    return true;
+                }
+            }
+            return false;
+            
+        }
+
         /// <summary>
         /// Loop through all the views placed on a sheet and return a list of plan views only (Floor, Ceiling, Engineering or Area Plan only).
         /// </summary>

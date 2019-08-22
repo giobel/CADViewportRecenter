@@ -93,8 +93,7 @@ namespace RevitAddin
                                 {
                                     Viewport vp = doc.GetElement(vpId) as Viewport;
                                     View planView = doc.GetElement(vp.ViewId) as View;
-
-
+                                    
                                     if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan)
                                     {
                                         //XYZ maxPt = vp.GetBoxOutline().MaximumPoint; too slow
@@ -114,12 +113,8 @@ namespace RevitAddin
                                         {
                                             sb.AppendLine($"{vs.SheetNumber},{vp.Name},{width},{height}");
                                             countOversizedViewports += 1;
-                                        }
-                                            
-
+                                        }       
                                     }
-
-
                                 }
                                 catch
                                 {

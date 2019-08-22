@@ -37,20 +37,7 @@ namespace RevitAddin
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
-                        "Sheet Number",
-                        "View Centre WCS-X",
-                        "View Centre WCS-Y",
-                        "View Centre WCS-Z",
-                        "Angle to North",
-                        "Viewport Centre-X",
-                        "Viewport Centre-Y",
-                        "Viewport Centre-Z",
-                        "Viewport Width",
-                        "Viewport Height",
-                        "Xref name"
-                       )
-                       );
+            sb.AppendLine($"Sheet Number,View Centre WCS-X,View Centre WCS-Y,View Centre WCS-Z,Angle to North,Viewport Centre-X,Viewport Centre-Y,Viewport Centre-Z,Viewport Width,Viewport Height,Xref name,Group");
 
             string outputFile = "summary.csv";
 
@@ -103,15 +90,18 @@ namespace RevitAddin
                         {
                             if (pf.abortFlag)
                                 break;
-
-
+                            
                             //Collect all the viewports on the sheet
                             ICollection<ElementId> viewportIds = vs.GetAllViewports();
 
-                            //Find the viewports that shows a Floor Plan (Architecture) or Structural Plan (Engineering). 
+                            //Collect all views on the sheet
+                            ISet<ElementId> placedViewsIds = vs.GetAllPlacedViews();
+                            //Filter the views that are plans (Floor,Ceiling,Engineering or Area)
+                            List<View> planViews = Helpers.FilterPlanViewport(doc, placedViewsIds); 
+
+                            //Collect the viewports that shows a Floor Plan (Architecture) or Structural Plan (Engineering). 
                             Dictionary<Viewport, View> viewportViewDict = new Dictionary<Viewport, View>();
-
-
+                            
                             //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
                             int hasArchOrStrViewports = 0;
 
@@ -127,14 +117,12 @@ namespace RevitAddin
                                     hasArchOrStrViewports += 1;
                                 }
                             }
-
-
+                            
                             if (hasArchOrStrViewports != 0)
                             {
                                 //Sheet filename
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
-
-
+                                
                                 foreach (Viewport vp in viewportViewDict.Keys)
                                 {
                                     View vpPlan = viewportViewDict[vp];
@@ -225,20 +213,23 @@ namespace RevitAddin
                                         counter += 1;
                                     }
 
-                                    sb.AppendLine(String.Format("{0},{1},{2},{3},{4},{5},{6}",
-                                                    fileName,
-                                                    Helpers.PointToString(viewCentreWCSZ),
-                                                    projPosition.Angle * 180 / Math.PI,
-                                                    Helpers.PointToString(flattenVPcenter),
-                                                    width.ToString(),
-                                                    height.ToString(),
-                                                    xrefName
-                                                   )
-                                                   );
+                                    //Check if views are overlapping. If they are, xref should not be bind
+                                    string group = "";
+                                    
+                                    if(Helpers.CheckSingleViewOverlaps(doc, vpPlan, planViews))
+                                    {
+                                        group = "xref";
+                                    }
+                                    else
+                                    {
+                                        group = "bind";
+                                    }
+
+                                    sb.AppendLine($"{ fileName},{ Helpers.PointToString(viewCentreWCSZ)},{projPosition.Angle * 180 / Math.PI},{Helpers.PointToString(flattenVPcenter)},{width.ToString()},{height.ToString()},{xrefName},{group}");
 
                                 }//close foreach
 
-                            }
+                            }//close if sheet has viewports to export
                             else
                             {
                                 sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";

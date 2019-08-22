@@ -47,7 +47,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(129, 13);
             this.label1.TabIndex = 21;
-            this.label1.Text = "version 0.1.1 22/08/2019";
+            this.label1.Text = "version 0.1.1 21/08/2019";
             // 
             // label4
             // 

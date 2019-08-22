@@ -82,9 +82,7 @@ namespace RevitAddin
 
                                 //Filter the views that are plans (Floor,Ceiling,Engineering or Area)
                                 List<View> planViews = Helpers.FilterPlanViewport(doc, placedViewsIds);
-
-
-
+                                
                                 if (planViews.Count > 0) //sheet has plan views, check if they are overlapping
                                 {
                                     string testOverlappingView = Helpers.CheckVPOverlaps(doc, planViews);
