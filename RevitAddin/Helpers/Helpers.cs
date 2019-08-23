@@ -229,6 +229,7 @@ namespace RevitAddin
             foreach (ElementId eid in planViewsIds)
             {
                 View planView = doc.GetElement(eid) as View;
+                
                 if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
                 {
                     filteredViews.Add(planView);

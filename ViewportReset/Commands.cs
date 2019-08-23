@@ -10,6 +10,7 @@ using Autodesk.AutoCAD.Geometry;
 using System.Reflection;
 using Autodesk.AutoCAD.PlottingServices;
 using System.Collections.Generic;
+using Autodesk.AutoCAD.Colors;
 
 namespace AttributeUpdater
 {
@@ -244,6 +245,8 @@ namespace AttributeUpdater
 
                 //Database db = new Database(false, false);
                 Database db = new Database(false, true);
+                
+
                 using (db)
                 {
                     try
@@ -257,13 +260,39 @@ namespace AttributeUpdater
 
                         lm.CurrentLayout = "Model"; //is it necessary?
 
+                        
+                        string layerName = $"0-{sheetObject.xrefName}";
+
+                        
+
                         using (Transaction trans = db.TransactionManager.StartTransaction())
                         {
+                            CreateLayer(db, trans, layerName);
+
+                            LayerTable layerTable = trans.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                            ObjectId layer = new ObjectId();
+                            List<ObjectId> layerToFreeze = new List<ObjectId>();
+
+                            foreach (ObjectId layerId in layerTable)
+                            {
+                                LayerTableRecord currentLayer = trans.GetObject(layerId, OpenMode.ForWrite) as LayerTableRecord;
+                                if (currentLayer.Name == layerName)
+                                {
+                                    layer = layerId;
+                                }   
+                                else
+                                {
+                                    layerToFreeze.Add(layerId);
+                                }
+                            }
+
                             //Attch Xref
                             //string PathName = $"{pathName}\\{dict[name][10]}";
                             string PathName = $"{pathName}\\{sheetObject.xrefName}";
                             //ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
                             ObjectId acXrefId = db.AttachXref(PathName, sheetObject.xrefName);
+
 
                             if (!acXrefId.IsNull)
                             {
@@ -272,7 +301,7 @@ namespace AttributeUpdater
                                 Point3d insPt = new Point3d(0, 0, 0);
                                 using (BlockReference blockRef = new BlockReference(insPt, acXrefId))
                                 {
-                                    //blockRef.Layer = "0";
+                                    blockRef.SetLayerId(layer,true);
                                     BlockTable blocktable = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                                     BlockTableRecord modelSpace = trans.GetObject(blocktable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                                     modelSpace.AppendEntity(blockRef);
@@ -293,7 +322,7 @@ namespace AttributeUpdater
 
                             foreach (ObjectId ID in CurrentLo.GetViewports())
                             {
-                                Viewport VP = trans.GetObject(ID, OpenMode.ForRead) as Viewport;
+                                Viewport VP = trans.GetObject(ID, OpenMode.ForWrite) as Viewport;
 
                                 //Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
                                 XYZ vpCentre = sheetObject.viewportCentre;
@@ -313,10 +342,12 @@ namespace AttributeUpdater
 
                                 if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
                                 {
+                                 
                                     UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
                                 }
                                 else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
                                 {
+                                    VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                     UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
                                 }
                             }
@@ -358,6 +389,29 @@ namespace AttributeUpdater
               saved,
               problem
             );
+        }
+
+        public void CreateLayer(Database acCurDb, Transaction acTrans, string sLayerName)
+        {
+                // Open the Layer table for read
+                LayerTable layerTable = acTrans.GetObject(acCurDb.LayerTableId,OpenMode.ForRead) as LayerTable;
+                if (layerTable.Has(sLayerName) == false)
+                {
+                    using (LayerTableRecord acLyrTblRec = new LayerTableRecord())
+                    {
+                        // Assign the layer the ACI color 3 and a name
+                        acLyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 3);
+                        acLyrTblRec.Name = sLayerName;
+
+                        // Upgrade the Layer table for write
+                        layerTable.UpgradeOpen();
+
+                        // Append the new layer to the Layer table and the transaction
+                        layerTable.Add(acLyrTblRec);
+                        acTrans.AddNewlyCreatedDBObject(acLyrTblRec, true);
+                    }
+                }
+                
         }
 
         //https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2016/ENU/AutoCAD-NET/files/GUID-288B4394-C51F-48CC-8B8C-A27873CFFDC1-htm.html

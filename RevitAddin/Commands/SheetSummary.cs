@@ -67,7 +67,11 @@ namespace RevitAddin
 
                         string sheetGroup = ""; //No plans, Plans not Overlapping, Plans Overlapping
 
-                        using (ProgressForm pf = new ProgressForm(caption, s, n))
+                        using (Transaction t = new Transaction(doc, "Set Sheet Parameter"))
+                        {
+                            t.Start();
+
+                            using (ProgressForm pf = new ProgressForm(caption, s, n))
                         {
                             foreach (ViewSheet vs in selectedSheets)
                             {
@@ -103,16 +107,23 @@ namespace RevitAddin
                                     countNoPlansViewports += 1;
                                 }
 
+                                //store the group data in a sheet parameter - hardcoded
+                                    Parameter p = vs.LookupParameter("Mx Export_Sheet Filter");
+                                    p.Set(sheetGroup);
+                                    
+                                
                                 sb.AppendLine($"{vs.SheetNumber},{sheetGroup}");
                             }//close foreach
                             
                         }//close ProgressForm
 
+                            t.Commit();
+                        }
                         File.AppendAllText(outputFile, sb.ToString());
 
                         TaskDialog myDialog = new TaskDialog("Summary");
                         myDialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                        myDialog.MainContent = $"Operation completed. {countNoPlansViewports} sheets do not have plan views\n{countNonOverlappingViewports} sheets do not have overlapping views\n{countOverlappingViewports} sheets do have overlapping views";
+                        myDialog.MainContent = $"Operation completed.\n{countNoPlansViewports} sheets do not have plan views\n{countNonOverlappingViewports} sheets do not have overlapping views\n{countOverlappingViewports} sheets do have overlapping views";
 
                         myDialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink4, $"Open Log File {outputFile}", "");
 
@@ -128,9 +139,19 @@ namespace RevitAddin
                         
                     }//close using form
                 }//close try
-                catch
+                catch (System.NullReferenceException)
                 {
-                    TaskDialog.Show("Error", "Operation cancelled. Please close the log file.");
+                    TaskDialog.Show("Error", "Parameter \"Mx Export_Sheet Filter\" not found on Sheet.");
+                    return Result.Failed;
+                }
+                catch (System.IO.IOException)
+                {
+                    TaskDialog.Show("Error", "Please close the log file before exporting.");
+                    return Result.Failed;
+                }
+                catch(Exception ex)
+                {
+                    TaskDialog.Show("Error", ex.GetType().ToString());
                     return Result.Failed;
                 }
                 

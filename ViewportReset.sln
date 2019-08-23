@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewportReset", "ViewportRe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevitAddin", "RevitAddin\RevitAddin.csproj", "{467C6553-45F6-4BD7-A3D2-42895AE87955}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutocadTest", "AutocadTest\AutocadTest.csproj", "{54D6B054-C898-4EE4-8576-E819A475BBF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{467C6553-45F6-4BD7-A3D2-42895AE87955}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{467C6553-45F6-4BD7-A3D2-42895AE87955}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{467C6553-45F6-4BD7-A3D2-42895AE87955}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54D6B054-C898-4EE4-8576-E819A475BBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54D6B054-C898-4EE4-8576-E819A475BBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54D6B054-C898-4EE4-8576-E819A475BBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54D6B054-C898-4EE4-8576-E819A475BBF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -93,9 +93,7 @@ namespace RevitAddin
                     int n = form.tboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
-
-                    string sheetWithoutArchOrEngViewports = "";
-
+                    
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
 
@@ -112,47 +110,38 @@ namespace RevitAddin
 
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
 
-                                List<ElementId> views = vs.GetAllPlacedViews().ToList();
+                                //select all the views placed on the sheet
+                                ISet<ElementId> views = vs.GetAllPlacedViews();
 
-                                //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
+                                //select planViewsOnly 
+                                List<View> planViewsOnly = Helpers.FilterPlanViewport(doc, views);
+
+                                //count the sheets with Floor,Ceiling,Engineering and Area plans
                                 int hasArchOrStrViewports = 0;
 
-                                foreach (ElementId eid in views)
+                                foreach (View planView in planViewsOnly)
                                 {
-                                    View planView = doc.GetElement(eid) as View;
-
-                                    if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
-                                    {
-                                        planView.IsolateCategoriesTemporary(categoryToIsolate);
-                                        hasArchOrStrViewports += 1;
-                                    }
+                                    planView.IsolateCategoriesTemporary(categoryToIsolate);
+                                    hasArchOrStrViewports += 1;   
                                 }
-
-                                //if the sheet does not contain FloorPlan, EngineeringPlan or CeilingPlan, do not export it
-                                if (hasArchOrStrViewports != 0)
+                                
+                                if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
                                 {
-                                    if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
-                                    {
-                                        TaskDialog.Show("Error", "Check that the destination folder exists");
-                                    }
-                                    else
-                                    {
-                                        counter += 1;
-                                    }
+                                    TaskDialog.Show("Error", "Check that the destination folder exists");
                                 }
                                 else
                                 {
-                                    sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";
-
+                                    counter += 1;
                                 }
-
+                                
                                 pf.Increment();
                             }
 
-                            t.RollBack();
+                             t.RollBack();
+                            //t.Commit();
                         }//close using transaction
                     }
-                    TaskDialog.Show("Done", $"{counter} sheets have been exported.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
+                    TaskDialog.Show("Done", $"{counter} sheets have been exported.");
                 }//close using form
                 return Result.Succeeded;
             }

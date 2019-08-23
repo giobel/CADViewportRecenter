@@ -198,10 +198,11 @@ namespace RevitAddin
                                     XYZ minPt = vp.GetBoxOutline().MinimumPoint;
                                     int width = Convert.ToInt32((maxPt.X - minPt.X) * 304.8);
                                     int height = Convert.ToInt32((maxPt.Y - minPt.Y) * 304.8);
+                                    
+                                    //string xrefName = $"{vs.SheetNumber}-{vp.Id}-xref";
 
-
-                                    //Suffix to xref
-                                    string xrefName = $"{vs.SheetNumber}-{vp.Id}-xref";
+                                    //Set the file name to CAAD parameter
+                                    string xrefName = $"{fileName}-{vp.Id}-xref";
 
 
                                     if (!Helpers.ExportDWG(doc, vpPlan, exportSettings, xrefName, destinationFolder))
