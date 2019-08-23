@@ -280,11 +280,12 @@ namespace AttributeUpdater
                                 if (currentLayer.Name == layerName)
                                 {
                                     layer = layerId;
-                                }   
-                                else
-                                {
                                     layerToFreeze.Add(layerId);
-                                }
+                                }   
+                                //else
+                                //{
+                                //    layerToFreeze.Add(layerId);
+                                //}
                             }
 
                             //Attch Xref
@@ -347,8 +348,12 @@ namespace AttributeUpdater
                                 }
                                 else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
                                 {
-                                    VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
+                                    
                                     UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                                }
+                                else
+                                {
+                                    VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                 }
                             }
 
