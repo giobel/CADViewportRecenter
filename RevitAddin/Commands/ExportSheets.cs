@@ -110,7 +110,8 @@ namespace RevitAddin
                                     break;
 
                                 //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
-
+                                
+                                //if the parameter does not exists, crashes
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
 
                                 //select all the views placed on the sheet
@@ -151,6 +152,11 @@ namespace RevitAddin
                     TaskDialog.Show("Done", $"{counter} sheets have been exported in {elapsedMinutes} min.");
                 }//close using form
                 return Result.Succeeded;
+            }
+            catch(System.NullReferenceException)
+            {
+                TaskDialog.Show("Error", "Check parameter \"CADD File Name exists\" ");
+                return Result.Failed;
             }
             catch (Exception ex)
             {
