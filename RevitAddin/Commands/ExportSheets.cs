@@ -93,16 +93,19 @@ namespace RevitAddin
                     int n = form.tboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
-                    
+
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
-
+                        
                         using (Transaction t = new Transaction(doc, "Hide categories"))
                         {
                             t.Start();
 
                             foreach (ViewSheet vs in selectedSheets)
                             {
+                                
                                 if (pf.abortFlag)
                                     break;
 
@@ -141,7 +144,11 @@ namespace RevitAddin
                             //t.Commit();
                         }//close using transaction
                     }
-                    TaskDialog.Show("Done", $"{counter} sheets have been exported.");
+
+                    watch.Stop();
+                    var elapsedMinutes = watch.ElapsedMilliseconds / 1000 / 60;
+
+                    TaskDialog.Show("Done", $"{counter} sheets have been exported in {elapsedMinutes} min.");
                 }//close using form
                 return Result.Succeeded;
             }

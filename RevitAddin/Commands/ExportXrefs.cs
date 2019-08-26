@@ -35,6 +35,8 @@ namespace RevitAddin
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
+            
+
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"Sheet Number,View Centre WCS-X,View Centre WCS-Y,View Centre WCS-Z,Angle to North,Viewport Centre-X,Viewport Centre-Y,Viewport Centre-Z,Viewport Width,Viewport Height,Xref name,Group");
@@ -86,8 +88,11 @@ namespace RevitAddin
 
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
+                        var watch = System.Diagnostics.Stopwatch.StartNew();
+
                         foreach (ViewSheet vs in selectedSheets)
                         {
+                            
                             if (pf.abortFlag)
                                 break;
 
@@ -251,15 +256,19 @@ namespace RevitAddin
 
 
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";
+                                sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}: {ex.Message}\n";
                                 //TaskDialog.Show("r", vs.SheetNumber);
                             }
                         }
                         File.WriteAllText($"{destinationFolder}\\{outputFile}", sb.ToString());
 
-                        TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
+                        
+                        watch.Stop();
+                        var elapsedMinutes = watch.ElapsedMilliseconds/1000/60;
+
+                        TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created in {elapsedMinutes} min.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
                     }//close form
                     return Result.Succeeded;
                 }
