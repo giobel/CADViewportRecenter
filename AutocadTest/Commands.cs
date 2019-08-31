@@ -15,8 +15,8 @@ namespace AutocadTest
     {
         //http://drive-cad-with-code.blogspot.com/2014/03/selecting-entities-in-modelspace.html
 
-        [CommandMethod("TEST")]
-        public void Testa()
+        [CommandMethod("MERGE")]
+        public void Merge()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
@@ -24,8 +24,6 @@ namespace AutocadTest
             LayoutManager lm = LayoutManager.Current;
 
             lm.CurrentLayout = "Layout1";
-
-            ed.Command("_.zoom", "_extents");
 
             Database db = doc.Database;
 
@@ -50,12 +48,27 @@ namespace AutocadTest
             //TO BE FIXED
             SheetObject sheetObject = sheetsList.Where(x => x.sheetName == dwgName).First();
 
+            XYZ currentVpCentre = sheetObject.viewportCentre;
+
+            Point3d revitViewportCentre = new Point3d(currentVpCentre.x, currentVpCentre.y, 0);
+
+            XYZ _revitViewCentreWCS = sheetObject.viewCentre;
+
+            Point3d revitViewCentreWCS = new Point3d(_revitViewCentreWCS.x, _revitViewCentreWCS.y, 0);
+
+            double degrees = Helpers.DegToRad(sheetObject.angleToNorth);
+
+            double vpWidht = sheetObject.viewportWidth;
+
+            double vpHeight = sheetObject.viewportHeight;
+
+
             //get document name
             ed.WriteMessage("\n======================== Dwg Name: " + doc.Name + "\n");
             ed.WriteMessage("======================== Xref(s): " + sheetObject.xrefName + "\n");
 
             //find the xref viewport and delete its content
-            ed.SwitchToPaperSpace();
+            //ed.SwitchToPaperSpace();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -69,13 +82,14 @@ namespace AutocadTest
 
                 List<ObjectId> layerToFreeze = new List<ObjectId>();
 
+
                 //Create Layer to store xref
                 #region
                 string layerName = $"0-{sheetObject.xrefName}";
 
                 Helpers.CreateLayer(db, trans, layerName);
 
-                ed.WriteMessage("======================== Create Layer for xref: " + layerName + "\n");
+                ed.WriteMessage("======================== Layer created: " + layerName + "\n");
 
                 LayerTable layerTable = trans.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
@@ -92,40 +106,23 @@ namespace AutocadTest
                     }
                 }
 
-
                 #endregion
 
                 //Find the equivalent Revit viewport
-                #region Find Viewport
+                #region
                 foreach (ObjectId ID in CurrentLo.GetViewports())
                 {
                     Viewport VP = trans.GetObject(ID, OpenMode.ForWrite) as Viewport;
 
-                    //Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
-                    XYZ vpCentre = sheetObject.viewportCentre;
-                    Point3d revitViewportCentre = new Point3d(vpCentre.x, vpCentre.y, 0);
-
-                    //Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
-                    XYZ _revitViewCentreWCS = sheetObject.viewCentre;
-                    //Point3d revitViewCentreWCS = new Point3d(revitViewCentre.x, revitViewCentre.y, 0);
-                    Point3d revitViewCentreWCS = new Point3d(_revitViewCentreWCS.x, _revitViewCentreWCS.y, 0);
-
-                    //double degrees = DegToRad(double.Parse(dict[name][4]));
-                    double degrees = Helpers.DegToRad(sheetObject.angleToNorth);
-                    //double vpWidht = double.Parse(dict[name][8]);
-                    double vpWidht = sheetObject.viewportWidth;
-                    //double vpHeight = double.Parse(dict[name][9]);
-                    double vpHeight = sheetObject.viewportHeight;
-
-                    if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
+                    if (VP != null && CurrentLo.GetViewports().Count == 2 && VP.CenterPoint.X > 20) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
                     {
                         matchingViewport = VP;
-                        //Helpers.UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                        ed.WriteMessage("======================== Single Viewport on sheet\n");
                     }
-                    else if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
+                    if (VP != null && VP.CenterPoint.DistanceTo(revitViewportCentre) < 100)  //Should use the closest viewport, not a fixed distance
                     {
                         matchingViewport = VP;
-                        //Helpers.UpdateViewport(VP, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                        ed.WriteMessage("======================== Multiple Viewports on sheet\n");
                     }
                     else
                     {
@@ -137,7 +134,7 @@ namespace AutocadTest
                 #endregion
 
                 //Delete Viewport Content
-                #region Delete Viewport Content
+                #region
                 Point3dCollection vpCorners = GetViewportBoundary(matchingViewport);
 
                 Matrix3d mt = PaperToModel(matchingViewport);
@@ -149,7 +146,7 @@ namespace AutocadTest
                 try
                 {
                     viewportContent = SelectEntitisInModelSpaceByViewport(doc, vpCornersInModel);
-                    ed.WriteMessage("======================== Viewport objects" + viewportContent.Length.ToString() + "\n");
+                    ed.WriteMessage("======================== Viewport objects: " + viewportContent.Length.ToString() + "\n");
                 }
                 catch (System.Exception ex)
                 {
@@ -174,8 +171,7 @@ namespace AutocadTest
                 #endregion
 
                 //Load Xref
-                #region Load Xref
-                ed.WriteMessage("======================== Load Xref\n");
+                #region
                 string PathName = $"{folderPath}\\{sheetObject.xrefName}";
 
                 ObjectId acXrefId = db.AttachXref(PathName, sheetObject.xrefName);
@@ -200,29 +196,46 @@ namespace AutocadTest
                 #endregion
 
                 //Recenter Viewport
+                #region
+                Helpers.UpdateViewport(matchingViewport, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                ed.WriteMessage("======================== Viewport updated \n");
+                #endregion
+
+                ed.WriteMessage("Swith to Model layout \n");
+                lm.CurrentLayout = "Model";
+
+                //ed.WriteMessage("======================== Run Set by layer\n");
+                //ed.Command("-setbylayer", "all"," ","y","y");
+
+                ed.WriteMessage("======================== Run Audit\n");
+                ed.Command("audit", "y");
+
+                ed.WriteMessage("======================== Run Purge \n");
+                ed.Command("-purge", "all", " ", "n");
 
 
+                //ed.WriteMessage("Switch back to paper space \n");
+
+                lm.CurrentLayout = "Layout1";
+
+                ed.Command("_.zoom", "_extents");
+                ed.Command("_.zoom", "_scale", "0.9");
 
                 trans.Commit();
             }
 
-
-
-            object obj = Application.GetSystemVariable("DBMOD");
-
-            // Check the value of DBMOD, if 0 then the drawing has no unsaved changes
-            if (System.Convert.ToInt16(obj) != 0)
-            {
-                db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
-            }
-
+            ed.WriteMessage("Save file \n");
+            db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
 
             ed.WriteMessage("done");
         }
 
         public static ObjectId[] SelectEntitisInModelSpaceByViewport(Document doc, Point3dCollection boundaryInModelSpace)
         {
-            doc.Editor.SwitchToModelSpace();
+            //doc.Editor.SwitchToModelSpace();
+            LayoutManager lm = LayoutManager.Current;
+
+            lm.CurrentLayout = "Model";
 
             ObjectId[] ids = null;
 
@@ -233,7 +246,7 @@ namespace AutocadTest
             }
 
 
-            doc.Editor.SwitchToPaperSpace();
+            //doc.Editor.SwitchToPaperSpace();
             return ids;
         }
 
