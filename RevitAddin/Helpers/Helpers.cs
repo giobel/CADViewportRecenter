@@ -45,7 +45,6 @@ namespace RevitAddin
                 {
                     // Export using the predefined options
                     DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(document, name);
-
                     // Export the active view
                     ICollection<ElementId> views = new List<ElementId>();
                     views.Add(view.Id);
@@ -57,7 +56,6 @@ namespace RevitAddin
 
             return exported;
         }
-
         public static string PointToString(XYZ point)
         {
 
@@ -230,13 +228,25 @@ namespace RevitAddin
             {
                 View planView = doc.GetElement(eid) as View;
                 
-                if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
+                if (IsPlanType(planView))
                 {
                     filteredViews.Add(planView);
                 }
 
             }
             return filteredViews;
+        }
+
+        public static bool IsPlanType(View planView)
+        {
+            if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

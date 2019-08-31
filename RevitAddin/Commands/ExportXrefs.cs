@@ -118,7 +118,8 @@ namespace RevitAddin
                                     Viewport vport = doc.GetElement(eid) as Viewport;
                                     View planView = doc.GetElement(vport.ViewId) as View;
 
-                                    if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
+                                    //if planview is a keyplan do not export it
+                                    if (planView.LookupParameter("KeyPlan").AsString() == "Yes" && planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
                                     {
                                         viewportViewDict.Add(vport, planView);
                                         //vpPlan.Add(planView);
@@ -250,11 +251,7 @@ namespace RevitAddin
                                     sheetWithoutArchOrEngViewports += $"{vs.SheetNumber}\n";
                                 }
 
-
-
                                 pf.Increment();
-
-
                             }
                             catch (Exception ex)
                             {

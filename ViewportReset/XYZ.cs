@@ -1,4 +1,4 @@
-﻿namespace AttributeUpdater
+﻿namespace ViewportReset
 {
     public class XYZ
     {

@@ -16,7 +16,7 @@ using winForm = System.Windows.Forms;
 namespace RevitAddin
 {
     [Transaction(TransactionMode.Manual)]
-    public class ExportSheets : IExternalCommand
+    public class DeleteViewports : IExternalCommand
     {
         public Result Execute(
           ExternalCommandData commandData,
@@ -82,12 +82,7 @@ namespace RevitAddin
                         return Result.Failed;
                     }
 
-                    ICollection<ElementId> categoryToIsolate = new List<ElementId>();
-
-                    Categories groups = doc.Settings.Categories;
-
-                    categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
-
+                    
                     List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
 
                     int n = form.tboxSelectedSheets.Count;
@@ -98,19 +93,19 @@ namespace RevitAddin
 
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
-                        
+
                         using (Transaction t = new Transaction(doc, "Hide categories"))
                         {
                             t.Start();
 
                             foreach (ViewSheet vs in selectedSheets)
                             {
-                                
+
                                 if (pf.abortFlag)
                                     break;
 
                                 //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
-                                
+
                                 //if the parameter does not exists, go to catch
                                 string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
 
@@ -127,10 +122,9 @@ namespace RevitAddin
 
                                 foreach (View planView in planViewsOnly)
                                 {
-                                    planView.IsolateCategoriesTemporary(categoryToIsolate);
-                                    hasArchOrStrViewports += 1;   
+                                    hasArchOrStrViewports += 1;
                                 }
-                                
+
                                 if (!Helpers.ExportDWG(doc, vs, exportSettings, fileName, destinationFolder))
                                 {
                                     TaskDialog.Show("Error", "Check that the destination folder exists");
@@ -139,11 +133,11 @@ namespace RevitAddin
                                 {
                                     counter += 1;
                                 }
-                                
+
                                 pf.Increment();
                             }
 
-                             t.RollBack();
+                            t.RollBack();
                             //t.Commit();
                         }//close using transaction
                     }
@@ -152,10 +146,12 @@ namespace RevitAddin
                     var elapsedMinutes = watch.ElapsedMilliseconds / 1000 / 60;
 
                     TaskDialog.Show("Done", $"{counter} sheets have been exported in {elapsedMinutes} min.");
+
+                    
                 }//close using form
                 return Result.Succeeded;
             }
-            catch(System.NullReferenceException)
+            catch (System.NullReferenceException)
             {
                 TaskDialog.Show("Error", "Check parameter \"CADD File Name exists\" ");
                 return Result.Failed;

@@ -1,106 +1,74 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
+using System;
+using System.Collections.Generic;
 
 namespace ViewportReset
 {
-    public class Commands
+    //Class to hold Viewport information, obtained
+    //in single Transaction
+    public class ViewportInfo
     {
-        //http://drive-cad-with-code.blogspot.com/2014/03/selecting-entities-in-modelspace.html
+        public ObjectId ViewportId { set; get; }
+        public ObjectId NonRectClipId { set; get; }
+        public Point3dCollection BoundaryInPaperSpace { set; get; }
+        public Point3dCollection BoundaryInModelSpace { set; get; }
+    }
 
-        [CommandMethod("TEST")]
-        public void Testa()
+    public class CadHelper
+    {
+        //Get needed Viewport information
+        public static ViewportInfo[] SelectLockedViewportInfoOnLayout(Document dwg, string layoutName)
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
+            List<ViewportInfo> lst = new List<ViewportInfo>();
+            TypedValue[] vals = new TypedValue[] { new TypedValue((int)DxfCode.Start, "VIEWPORT"), new TypedValue((int)DxfCode.LayoutName, layoutName) };
 
-            LayoutManager lm = LayoutManager.Current;
-
-            lm.CurrentLayout = "Layout1";
-
-            ed.Command("_.zoom", "_extents");
-
-            Database db = doc.Database;
-
-            // pick a PS Viewport
-            PromptEntityOptions opts = new PromptEntityOptions("Pick PS Viewport");
-            opts.SetRejectMessage("Must select PS Viewport objects only");
-            opts.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Viewport), false);
-            PromptEntityResult res = ed.GetEntity(opts);
-
+            PromptSelectionResult res =
+              dwg.Editor.SelectAll(new SelectionFilter(vals));
             if (res.Status == PromptStatus.OK)
             {
-                using (Transaction tran = doc.TransactionManager.StartTransaction())
+                using (Transaction tran =
+                  dwg.TransactionManager.StartTransaction())
                 {
-                    Viewport vport = (Viewport)tran.GetObject(res.ObjectId, OpenMode.ForRead);
-
-                    Point3dCollection vpCorners = GetViewportBoundary(vport);
-
-                    Matrix3d mt = PaperToModel(vport);
-
-                    Point3dCollection vpCornersInModel = TransformPaperSpacePointToModelSpace(vpCorners, mt);
-
-                    ObjectId[] viewportContent = null;
-
-                    try
+                    foreach (ObjectId id in res.Value.GetObjectIds())
                     {
-                        viewportContent = SelectEntitisInModelSpaceByViewport(doc, vpCornersInModel);
-                        ed.WriteMessage(viewportContent.Length.ToString());
-                    }
-                    catch(Exception ex) {
-                        ed.WriteMessage(ex.Message);
-                    }
-
-                    if (viewportContent != null)
-                    {
-                        foreach (ObjectId item in viewportContent)
+                        Viewport vport = (Viewport)tran.GetObject(
+                          id, OpenMode.ForRead);
+                        if (vport.Number != 1 && vport.Locked)
                         {
-                            Entity e = (Entity)tran.GetObject(item, OpenMode.ForWrite);
-                            //ed.WriteMessage(item.GetType().Name);
-                            e.Erase();
-                        }
+                            ViewportInfo vpInfo = new ViewportInfo();
+                            vpInfo.ViewportId = id;
+                            vpInfo.NonRectClipId = vport.NonRectClipEntityId;
+                            if (!vport.NonRectClipEntityId.IsNull &&
+                              vport.NonRectClipOn)
+                            {
+                                Polyline2d pl = (Polyline2d)tran.GetObject(
+                                  vport.NonRectClipEntityId, OpenMode.ForRead);
+                                vpInfo.BoundaryInPaperSpace =
+                                 GetNonRectClipBoundary(pl, tran);
+                            }
+                            else
+                            {
+                                vpInfo.BoundaryInPaperSpace =
+                                 GetViewportBoundary(vport);
+                            }
 
-                    }
-                    else
-                    {
-                        ed.WriteMessage("viewport content is null!");
+                            Matrix3d mt = PaperToModel(vport);
+                            vpInfo.BoundaryInModelSpace =
+                             TransformPaperSpacePointToModelSpace(
+                             vpInfo.BoundaryInPaperSpace, mt);
+
+                            lst.Add(vpInfo);
+                        }
                     }
 
                     tran.Commit();
                 }
-
             }
 
-            object obj = Application.GetSystemVariable("DBMOD");
-
-            // Check the value of DBMOD, if 0 then the drawing has no unsaved changes
-            if (System.Convert.ToInt16(obj) != 0)
-            {
-                db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
-            }
-
-
-            ed.WriteMessage("done");
-        }
-
-        public static ObjectId[] SelectEntitisInModelSpaceByViewport(Document doc, Point3dCollection boundaryInModelSpace)
-        {
-            doc.Editor.SwitchToModelSpace();
-
-            ObjectId[] ids = null;
-
-                PromptSelectionResult res = doc.Editor.SelectCrossingPolygon(boundaryInModelSpace);
-                if (res.Status == PromptStatus.OK)
-                {
-                    ids = res.Value.GetObjectIds();
-                }
-
-
-            doc.Editor.SwitchToPaperSpace();
-            return ids;
+            return lst.ToArray();
         }
 
         public static Point3dCollection GetViewportBoundary(Viewport vport)
@@ -116,18 +84,22 @@ namespace ViewportReset
             return points;
         }
 
-        private static Extents3d GetViewportBoundaryExtentsInModelSpace(Point3dCollection points)
+        private static Point3dCollection GetNonRectClipBoundary(
+         Polyline2d polyline, Transaction tran)
         {
-            Extents3d ext = new Extents3d();
-            foreach (Point3d p in points)
+            Point3dCollection points = new Point3dCollection();
+
+            foreach (ObjectId vxId in polyline)
             {
-                ext.AddPoint(p);
+                Vertex2d vx = (Vertex2d)tran.GetObject(vxId, OpenMode.ForRead);
+                points.Add(polyline.VertexPosition(vx));
             }
 
-            return ext;
+            return points;
         }
 
-        private static Point3dCollection TransformPaperSpacePointToModelSpace(Point3dCollection paperSpacePoints, Matrix3d mt)
+        private static Point3dCollection TransformPaperSpacePointToModelSpace(
+         Point3dCollection paperSpacePoints, Matrix3d mt)
         {
             Point3dCollection points = new Point3dCollection();
 
@@ -174,13 +146,13 @@ namespace ViewportReset
                 yaxis = zaxis.CrossProduct(xaxis);
             }
             else if (zaxis.Z < 0)
-            {
+	            {
                 xaxis = Vector3d.XAxis * -1;
                 yaxis = Vector3d.YAxis;
                 zaxis = Vector3d.ZAxis * -1;
             }
 
-            else
+      else
             {
                 xaxis = Vector3d.XAxis;
                 yaxis = Vector3d.YAxis;
@@ -204,7 +176,7 @@ namespace ViewportReset
                 double aspectRatio = width / height;
                 double adjustFactor = 1.0 / 42.0;
                 double adjstLenLgth = vSize * lensLength *
-                 System.Math.Sqrt(1.0 + aspectRatio * aspectRatio) * adjustFactor;
+                 Math.Sqrt(1.0 + aspectRatio * aspectRatio) * adjustFactor;
                 double iDist = vd.Length;
                 double lensDist = iDist - adjstLenLgth;
                 double[] dataAry = new double[]
@@ -225,6 +197,5 @@ namespace ViewportReset
         }
 
         #endregion
-
-    }//close class
-}//close namespace
+    }
+}

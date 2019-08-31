@@ -4,16 +4,11 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
 using System.IO;
 using System;
-using forms = System.Windows.Forms;
 using System.Linq;
 using Autodesk.AutoCAD.Geometry;
-using System.Reflection;
-using Autodesk.AutoCAD.PlottingServices;
 using System.Collections.Generic;
-using Autodesk.AutoCAD.Colors;
-using ViewportReset;
 
-namespace AttributeUpdater
+namespace ViewportReset
 {
     public class CommandMergeAndBind
     {

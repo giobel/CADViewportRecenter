@@ -11,9 +11,8 @@ using System.Reflection;
 using Autodesk.AutoCAD.PlottingServices;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Colors;
-using ViewportReset;
 
-namespace AttributeUpdater
+namespace ViewportReset
 {
     public class CommandMerge
     {

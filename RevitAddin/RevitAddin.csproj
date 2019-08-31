@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="Commands\ExportKeynotes.cs" />
     <Compile Include="Commands\ExportXrefs.cs" />
     <Compile Include="Commands\ExportSheets.cs" />
     <Compile Include="Commands\SheetSummary.cs" />

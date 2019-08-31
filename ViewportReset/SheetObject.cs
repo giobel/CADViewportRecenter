@@ -1,6 +1,6 @@
 ﻿
 
-namespace AttributeUpdater
+namespace ViewportReset
 {
     class SheetObject
     {

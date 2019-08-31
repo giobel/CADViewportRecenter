@@ -22,7 +22,7 @@ When a sheet is exported from Revit, its viewports are placed close to the origi
 
 ![](images/Untitled-5c6c24bb-cf78-46f4-863f-aa81ffc38560.png)
 
-2. Export the viewports plan views in shared coordinates and import them in Autocad. If they do not overlap we can bind them, otherwise we can place them on different layers and control their visibility from the viewport layer manager. 
+2. Export the viewports plan views in shared coordinates and import them in the sheet dwg file. If they do not overlap we can bind them, otherwise we can place them on different layers and control their visibility from the viewport layer manager. 
 
 ![](images/Untitled-5568eb64-0af0-4b3e-8ff8-9652b57dd7ac.png)
 
