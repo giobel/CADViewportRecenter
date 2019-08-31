@@ -11,12 +11,10 @@ using System.Linq;
 
 namespace AutocadTest
 {
-    public class CommandDeleteVP
+    public class CommandRecenterViewports
     {
-        //http://drive-cad-with-code.blogspot.com/2014/03/selecting-entities-in-modelspace.html
-
-        [CommandMethod("DELETEVP")]
-        public void DeleteVP()
+        [CommandMethod("RECENTERVIEWPORTS")]
+        public void RecenterViewports()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = doc.Editor;
@@ -33,7 +31,6 @@ namespace AutocadTest
 
             List<SheetObject> sheetObjects = Helpers.SheetsObjectsFromCSV(folderPath, dwgName);
 
-            List<ObjectId[]> viewportContentList = new List<ObjectId[]>();
             //get document name
             ed.WriteMessage("\n======================== Dwg Name: " + doc.Name + "\n");
 
@@ -46,6 +43,17 @@ namespace AutocadTest
 
                 Point3d revitViewportCentre = new Point3d(currentVpCentre.x, currentVpCentre.y, 0);
 
+                XYZ _revitViewCentreWCS = sheetObject.viewCentre;
+
+                Point3d revitViewCentreWCS = new Point3d(_revitViewCentreWCS.x, _revitViewCentreWCS.y, 0);
+
+                double degrees = Helpers.DegToRad(sheetObject.angleToNorth);
+
+                double vpWidht = sheetObject.viewportWidth;
+
+                double vpHeight = sheetObject.viewportHeight;
+
+                string layerName = $"0-{sheetObject.xrefName}";
 
                 using (Transaction trans = db.TransactionManager.StartTransaction())
                 {
@@ -56,6 +64,19 @@ namespace AutocadTest
                     Layout CurrentLo = trans.GetObject((ObjectId)LayoutDict[currentLo], OpenMode.ForRead) as Layout;
 
                     Viewport matchingViewport = null;
+
+                    LayerTable layerTable = trans.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                    List<ObjectId> layerToFreeze = new List<ObjectId>();
+
+                    foreach (ObjectId layerId in layerTable)
+                    {
+                        LayerTableRecord currentLayer = trans.GetObject(layerId, OpenMode.ForWrite) as LayerTableRecord;
+                        if (currentLayer.Name == layerName)
+                        {
+                            layerToFreeze.Add(layerId);
+                        }
+                    }
 
                     //Find the equivalent Revit viewport
                     #region
@@ -75,66 +96,20 @@ namespace AutocadTest
                         }
                         else
                         {
-                            //VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
+                            VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                         }
                     }
                     ed.WriteMessage("======================== Viewport Name: " + matchingViewport.BlockName + "\n");
                     ed.WriteMessage("======================== Viewport Center: " + matchingViewport.CenterPoint + "\n");
                     #endregion
 
-                    //Delete Viewport Content
-                    #region
-                    Point3dCollection vpCorners = Helpers.GetViewportBoundary(matchingViewport);
+                    Helpers.UpdateViewport(matchingViewport, revitViewportCentre, revitViewCentreWCS, degrees, vpWidht, vpHeight);
+                    ed.WriteMessage("======================== Viewport updated \n");
 
-                    Matrix3d mt = Helpers.PaperToModel(matchingViewport);
-
-                    Point3dCollection vpCornersInModel = Helpers.TransformPaperSpacePointToModelSpace(vpCorners, mt);
-
-                    try
-                    {
-                        ObjectId[] viewportContent = Helpers.SelectEntitisInModelSpaceByViewport(doc, vpCornersInModel);
-                        viewportContentList.Add(viewportContent);
-                        ed.WriteMessage("======================== Viewport objects: " + viewportContent.Length.ToString() + "\n");
-                    }
-                    catch (System.Exception ex)
-                    {
-                        ed.WriteMessage("======================== Error: " + ex.Message + "\n");
-                    }
-
-                    #endregion
-
-                    //trans.Commit();
+                    trans.Commit();
                 }//close transaction
 
             }
-
-
-            using (Transaction transDelete = db.TransactionManager.StartTransaction())
-            {
-                foreach (ObjectId[] itemList in viewportContentList)
-                {
-                    if (itemList != null)
-                    {
-                        foreach (ObjectId item in itemList)
-                        {
-                            Entity e = (Entity)transDelete.GetObject(item, OpenMode.ForWrite);
-                            //ed.WriteMessage(item.GetType().Name);
-                            e.Erase();
-                        }
-                        ed.WriteMessage("======================== Viewport content deleted\n");
-                    }
-                    else
-                    {
-                        ed.WriteMessage("======================== viewport content is null!\n");
-                    }
-                }
-
-                transDelete.Commit();
-            }
-
-
-            ed.Command("_.zoom", "_extents");
-            ed.Command("_.zoom", "_scale", "0.9");
 
             ed.WriteMessage("Save file \n");
             db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
@@ -142,7 +117,6 @@ namespace AutocadTest
             ed.WriteMessage("done");
         }
 
-        
 
     }//close class
 }//close namespace

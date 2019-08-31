@@ -42,7 +42,7 @@ namespace AutocadTest
                 XYZ vc = new XYZ(Convert.ToDouble(item[1]), Convert.ToDouble(item[2]), Convert.ToDouble(item[3]));
                 XYZ vpCentre = new XYZ(Convert.ToDouble(item[5]), Convert.ToDouble(item[6]), Convert.ToDouble(item[7]));
 
-                sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10]));
+                sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10],item[11]));
             }
 
             
@@ -80,7 +80,7 @@ namespace AutocadTest
 
                 Viewport matchingViewport = null;
 
-                List<ObjectId> layerToFreeze = new List<ObjectId>();
+                
 
 
                 //Create Layer to store xref
@@ -95,6 +95,7 @@ namespace AutocadTest
 
                 ObjectId layer = new ObjectId();
 
+                List<ObjectId> layerToFreeze = new List<ObjectId>();
 
                 foreach (ObjectId layerId in layerTable)
                 {

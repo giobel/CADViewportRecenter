@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AutocadTest</RootNamespace>
     <AssemblyName>AutocadTest</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -50,6 +50,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandPurgeAuditSet.cs" />
+    <Compile Include="CommandRecenterVP.cs" />
+    <Compile Include="CommandCreateLayers.cs" />
+    <Compile Include="CommandLoadXrefs.cs" />
     <Compile Include="CommandDeleteVP.cs" />
     <Compile Include="CommandsMerge - Copy.cs" />
     <Compile Include="CommandsMergeMultiple.cs" />

@@ -12,7 +12,9 @@ namespace AutocadTest
         public double viewportHeight { get; private set; }
         public string xrefName { get; private set; }
 
-        public SheetObject(string SheetName, XYZ ViewCentre, double AngleToNorth, XYZ ViewportCentre, double ViewportWidth, double ViewportHeight, string XrefName)
+        public string group { get; private set; }
+
+        public SheetObject(string SheetName, XYZ ViewCentre, double AngleToNorth, XYZ ViewportCentre, double ViewportWidth, double ViewportHeight, string XrefName, string Group)
         {
             sheetName = SheetName;
             viewCentre = ViewCentre;
@@ -21,7 +23,7 @@ namespace AutocadTest
             viewportWidth = ViewportWidth;
             viewportHeight = ViewportHeight;
             xrefName = XrefName;
-
+            group = Group;
         }
     }
 }
