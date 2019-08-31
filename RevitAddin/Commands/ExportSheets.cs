@@ -127,7 +127,7 @@ namespace RevitAddin
 
                                 foreach (View planView in planViewsOnly)
                                 {
-                                    planView.IsolateCategoriesTemporary(categoryToIsolate);
+                                    //planView.IsolateCategoriesTemporary(categoryToIsolate);
                                     hasArchOrStrViewports += 1;   
                                 }
                                 

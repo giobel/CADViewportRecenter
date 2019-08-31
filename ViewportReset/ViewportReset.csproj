@@ -56,10 +56,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandMergeDeleteAndBind.cs" />
     <Compile Include="SelectInViewport\CadHelper.cs" />
     <Compile Include="SelectInViewport\MyCommands.cs" />
     <Compile Include="CommandMerge.cs" />
-    <Compile Include="DeleteInViewport.cs" />
     <Compile Include="CommandMergeAndBind.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Initialization.cs" />

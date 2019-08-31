@@ -98,7 +98,7 @@ namespace ViewportReset
             return points;
         }
 
-        private static Point3dCollection TransformPaperSpacePointToModelSpace(
+        public static Point3dCollection TransformPaperSpacePointToModelSpace(
          Point3dCollection paperSpacePoints, Matrix3d mt)
         {
             Point3dCollection points = new Point3dCollection();
@@ -197,5 +197,32 @@ namespace ViewportReset
         }
 
         #endregion
+
+        public static ObjectId[] SelectEntitisInModelSpaceByViewport(Document doc, Point3dCollection boundaryInModelSpace)
+        {
+            doc.Editor.SwitchToModelSpace();
+
+            ObjectId[] ids = null;
+            PromptSelectionResult res = null;
+
+            try
+            {
+                res = doc.Editor.SelectCrossingPolygon(boundaryInModelSpace);
+            }
+            catch(Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show(ex.Message);
+            }
+
+            if (res.Status == PromptStatus.OK)
+            {
+                ids = res.Value.GetObjectIds();
+            }
+
+
+            doc.Editor.SwitchToPaperSpace();
+            return ids;
+        }
+
     }
 }

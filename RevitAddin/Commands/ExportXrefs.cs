@@ -56,6 +56,7 @@ namespace RevitAddin
 
             int counter = 0;
 
+            
             try
             {
 
@@ -85,11 +86,11 @@ namespace RevitAddin
                     string caption = "Export xrefs";
 
                     string sheetWithoutArchOrEngViewports = "";
+                    
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
 
                     using (ProgressForm pf = new ProgressForm(caption, s, n))
                     {
-                        var watch = System.Diagnostics.Stopwatch.StartNew();
-
                         foreach (ViewSheet vs in selectedSheets)
                         {
                             
@@ -119,7 +120,7 @@ namespace RevitAddin
                                     View planView = doc.GetElement(vport.ViewId) as View;
 
                                     //if planview is a keyplan do not export it
-                                    if (planView.LookupParameter("KeyPlan").AsString() == "Yes" && planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
+                                    if (planView.ViewType == ViewType.FloorPlan || planView.ViewType == ViewType.EngineeringPlan || planView.ViewType == ViewType.CeilingPlan || planView.ViewType == ViewType.AreaPlan)
                                     {
                                         viewportViewDict.Add(vport, planView);
                                         //vpPlan.Add(planView);
@@ -261,14 +262,13 @@ namespace RevitAddin
                         }
                         File.WriteAllText($"{destinationFolder}\\{outputFile}", sb.ToString());
 
-                        
-                        watch.Stop();
-                        var elapsedMinutes = watch.ElapsedMilliseconds/1000/60;
-
-                        TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created in {elapsedMinutes} min.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
                     }//close form
+                    watch.Stop();
+                    var elapsedMinutes = watch.ElapsedMilliseconds / 1000 / 60;
+
+                    TaskDialog.Show("Done", $"{counter} plans have been exported and the csv has been created in {elapsedMinutes} min.\nNot exported:\n{sheetWithoutArchOrEngViewports}");
                     return Result.Succeeded;
-                }
+                }//close form
             }
             catch (Exception ex)
             {
