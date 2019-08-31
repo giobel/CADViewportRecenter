@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace AutocadTest
 {
-    public class Commands
+    public class CommandsMerge
     {
         //http://drive-cad-with-code.blogspot.com/2014/03/selecting-entities-in-modelspace.html
 
@@ -45,7 +45,7 @@ namespace AutocadTest
                 sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10]));
             }
 
-            //TO BE FIXED
+            
             SheetObject sheetObject = sheetsList.Where(x => x.sheetName == dwgName).First();
 
             XYZ currentVpCentre = sheetObject.viewportCentre;
@@ -94,7 +94,7 @@ namespace AutocadTest
                 LayerTable layerTable = trans.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 ObjectId layer = new ObjectId();
-                
+
 
                 foreach (ObjectId layerId in layerTable)
                 {

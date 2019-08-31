@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.PlottingServices;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -57,78 +58,78 @@ namespace AutocadTest
         public static int PurgeDatabase(Database db, Transaction tr)
         {
             int idCount = 0;
-            
-                // Create the list of objects to "purge"
-                ObjectIdCollection idsToPurge = new ObjectIdCollection();
-                
-                // Add all the Registered Application names
-                
-                RegAppTable rat = (RegAppTable)tr.GetObject(db.RegAppTableId,OpenMode.ForRead);
+
+            // Create the list of objects to "purge"
+            ObjectIdCollection idsToPurge = new ObjectIdCollection();
+
+            // Add all the Registered Application names
+
+            RegAppTable rat = (RegAppTable)tr.GetObject(db.RegAppTableId, OpenMode.ForRead);
 
 
-                foreach (ObjectId raId in rat)
+            foreach (ObjectId raId in rat)
 
-                {
+            {
 
-                    if (raId.IsValid)
-
-                    {
-
-                        idsToPurge.Add(raId);
-
-                    }
-
-                }
-
-
-                // Call the Purge function to filter the list
-
-
-                db.Purge(idsToPurge);
-
-
-                // Erase each of the objects we've been
-
-                // allowed to
-
-
-                foreach (ObjectId id in idsToPurge)
+                if (raId.IsValid)
 
                 {
 
-                    DBObject obj =
-
-                      tr.GetObject(id, OpenMode.ForWrite);
-
-
-                    // Let's just add to me "debug" code
-
-                    // to list the registered applications
-
-                    // we're erasing
-
-
-                    RegAppTableRecord ratr =
-
-                      obj as RegAppTableRecord;
-
-
-                    obj.Erase();
+                    idsToPurge.Add(raId);
 
                 }
 
-
-                // Return the number of objects erased
-
-                // (i.e. purged)
+            }
 
 
-                idCount = idsToPurge.Count;           
+            // Call the Purge function to filter the list
+
+
+            db.Purge(idsToPurge);
+
+
+            // Erase each of the objects we've been
+
+            // allowed to
+
+
+            foreach (ObjectId id in idsToPurge)
+
+            {
+
+                DBObject obj =
+
+                  tr.GetObject(id, OpenMode.ForWrite);
+
+
+                // Let's just add to me "debug" code
+
+                // to list the registered applications
+
+                // we're erasing
+
+
+                RegAppTableRecord ratr =
+
+                  obj as RegAppTableRecord;
+
+
+                obj.Erase();
+
+            }
+
+
+            // Return the number of objects erased
+
+            // (i.e. purged)
+
+
+            idCount = idsToPurge.Count;
 
             return idCount;
-    }
+        }
 
-    public static void UpdateViewport(Viewport _vp, Point3d rvtCentre, Point3d rvtCentreWCS, double degrees, double vpWidth, double vpHeight)
+        public static void UpdateViewport(Viewport _vp, Point3d rvtCentre, Point3d rvtCentreWCS, double degrees, double vpWidth, double vpHeight)
         {
             _vp.UpgradeOpen();
             double cs = _vp.CustomScale; //save the original scale as it changes when we change viewport width and height
@@ -179,7 +180,23 @@ namespace AutocadTest
                 db.BindXrefs(xrefCollection, true);
         }
 
+        public static List<SheetObject> SheetsObjectsFromCSV(string folderPath, string SheetNumber)
+        {
+            var logFile = File.ReadAllLines($"{folderPath}\\summary.csv").Select(line => line.Split(',')).ToList<string[]>();
+            logFile.RemoveAt(0);
 
+            List<SheetObject> sheetsList = new List<SheetObject>();
+            foreach (string[] item in logFile)
+            {
+                XYZ vc = new XYZ(Convert.ToDouble(item[1]), Convert.ToDouble(item[2]), Convert.ToDouble(item[3]));
+                XYZ vpCentre = new XYZ(Convert.ToDouble(item[5]), Convert.ToDouble(item[6]), Convert.ToDouble(item[7]));
+
+                sheetsList.Add(new SheetObject(item[0], vc, Convert.ToDouble(item[4]), vpCentre, Convert.ToDouble(item[8]), Convert.ToDouble(item[9]), item[10]));
+            }
+
+            return sheetsList.Where(x => x.sheetName == SheetNumber).ToList();
+
+        }
 
         public static double DegToRad(double deg)
         {
@@ -226,6 +243,6 @@ namespace AutocadTest
             }
 
         }
-   
+
     }
 }

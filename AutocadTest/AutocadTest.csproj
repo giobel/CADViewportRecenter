@@ -50,7 +50,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands.cs" />
+    <Compile Include="CommandDeleteVP.cs" />
+    <Compile Include="CommandsMerge - Copy.cs" />
+    <Compile Include="CommandsMergeMultiple.cs" />
+    <Compile Include="CommandsMerge.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SelectInsideViewport.cs" />
