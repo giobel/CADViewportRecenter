@@ -7,7 +7,7 @@ using Autodesk.AutoCAD.Runtime;
 using System;
 using System.Runtime.InteropServices;
 
-namespace AutocadTest
+namespace TristanBatchCommands
 {
     public class SelectInsideViewport
     {

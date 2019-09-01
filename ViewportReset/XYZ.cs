@@ -1,4 +1,4 @@
-﻿namespace ViewportReset
+﻿namespace TristanAutocadCommands
 {
     public class XYZ
     {

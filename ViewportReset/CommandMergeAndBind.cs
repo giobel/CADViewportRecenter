@@ -8,7 +8,7 @@ using System.Linq;
 using Autodesk.AutoCAD.Geometry;
 using System.Collections.Generic;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     public class CommandMergeAndBind
     {
@@ -21,10 +21,8 @@ namespace ViewportReset
             //https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2017/ENU/AutoCAD-NET/files/GUID-FAC1A5EB-2D9E-497B-8FD9-E11D2FF87B93-htm.html
 
             //https://adndevblog.typepad.com/autocad/2012/07/using-readdwgfile-with-net-attachxref-or-objectarx-acdbattachxref.html
-            //Database oldDb = HostApplicationServices.WorkingDatabase; //is it necessary?
-
             
-
+            
             // User should input the folder where the dwgs are saved
             PromptResult pr = ed.GetString("\nEnter folder containing DWGs to process: ");
 
@@ -35,13 +33,8 @@ namespace ViewportReset
 
             string[] fileNames = Directory.GetFiles(pathName, "*.dwg");
 
-            // We'll use some counters to keep track
-            // of how the processing is going
+            // We'll use some counters to keep track of how the processing is going
             int processed = 0, saved = 0, problem = 0;
-
-            //var dict = File.ReadLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToDictionary(line => line[0], line => line.ToList());
-
-            //dict.Remove(dict.Keys.First()); //remove the csv header
 
             //using a Sheet Object
             var logFile = File.ReadAllLines($"{pathName}\\summary.csv").Select(line => line.Split(',')).ToList<string[]>();
@@ -107,15 +100,13 @@ namespace ViewportReset
                             }
 
                             //Attch Xref
-                            //string PathName = $"{pathName}\\{dict[name][10]}";
                             string PathName = $"{pathName}\\{sheetObject.xrefName}";
-                            //ObjectId acXrefId = db.AttachXref(PathName, dict[name][10]);
+
                             ObjectId acXrefId = db.AttachXref(PathName, sheetObject.xrefName);
                             
                             if (!acXrefId.IsNull)
                             {
                                 // Attach the DWG reference to the current space
-                                //Point3d insPt = new Point3d(0, 0, sheetObject.viewCentre.z);
                                 Point3d insPt = new Point3d(0, 0, 0);
                                 using (BlockReference blockRef = new BlockReference(insPt, acXrefId))
                                 {
@@ -130,8 +121,6 @@ namespace ViewportReset
 
                             lm.CurrentLayout = "Layout1";
 
-                            //forms.MessageBox.Show(lm.CurrentLayout);
-
                             string currentLo = lm.CurrentLayout;
 
                             DBDictionary LayoutDict = trans.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
@@ -142,20 +131,14 @@ namespace ViewportReset
                             {
                                 Viewport VP = trans.GetObject(ID, OpenMode.ForWrite) as Viewport;
 
-                                //Point3d revitViewportCentre = new Point3d(double.Parse(dict[name][5]), double.Parse(dict[name][6]), 0);
                                 XYZ vpCentre = sheetObject.viewportCentre;
                                 Point3d revitViewportCentre = new Point3d(vpCentre.x, vpCentre.y, 0);
 
-                                //Point3d revitViewCentreWCS = new Point3d(double.Parse(dict[name][1]), double.Parse(dict[name][2]), 0);
                                 XYZ _revitViewCentreWCS = sheetObject.viewCentre;
-                                //Point3d revitViewCentreWCS = new Point3d(revitViewCentre.x, revitViewCentre.y, 0);
                                 Point3d revitViewCentreWCS = new Point3d(_revitViewCentreWCS.x, _revitViewCentreWCS.y, 0);
 
-                                //double degrees = DegToRad(double.Parse(dict[name][4]));
                                 double degrees = Helpers.DegToRad(sheetObject.angleToNorth);
-                                //double vpWidht = double.Parse(dict[name][8]);
                                 double vpWidht = sheetObject.viewportWidth;
-                                //double vpHeight = double.Parse(dict[name][9]);
                                 double vpHeight = sheetObject.viewportHeight;
 
                                 if (VP != null && CurrentLo.GetViewports().Count == 2) //by default the Layout is a viewport too...https://forums.autodesk.com/t5/net/layouts-and-viewports/td-p/3128748
@@ -171,16 +154,13 @@ namespace ViewportReset
                                     VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                 }
                             }
-                            
                             //Purge unused layers
                             Helpers.PurgeUnusedLayers(trans, db);
 
                             Helpers.PurgeDatabase(db, trans);
 
-                            trans.Commit();
-                            
+                            trans.Commit();                        
                         }
-
                         Helpers.BindXrefs(db);
 
                         db.Audit(true, true);
@@ -200,7 +180,6 @@ namespace ViewportReset
                         problem++;
                     }
                 }
-
             }
             ed.WriteMessage(
               "\n\nSuccessfully processed {0} files, of which {1} had " +
@@ -211,10 +190,5 @@ namespace ViewportReset
               problem
             );
         }
-
-
-
-
-
     }
 }

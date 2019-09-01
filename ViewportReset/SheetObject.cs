@@ -1,6 +1,6 @@
 ﻿
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     class SheetObject
     {

@@ -11,9 +11,9 @@ using System.Reflection;
 using Autodesk.AutoCAD.PlottingServices;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Colors;
-using ViewportReset;
+using TristanAutocadCommands;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     public class Test
     {

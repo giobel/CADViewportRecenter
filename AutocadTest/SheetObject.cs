@@ -1,6 +1,6 @@
 ﻿
 
-namespace AutocadTest
+namespace TristanBatchCommands
 {
     class SheetObject
     {

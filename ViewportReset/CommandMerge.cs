@@ -12,7 +12,7 @@ using Autodesk.AutoCAD.PlottingServices;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Colors;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     public class CommandMerge
     {
@@ -108,7 +108,7 @@ namespace ViewportReset
                                 if (currentLayer.Name == layerName)
                                 {
                                     layer = layerId;
-                                    layerToFreeze.Add(layerId);
+                                    layerToFreeze.Add(layerId); //we will freeze the 
                                 }
                                 //else
                                 //{
@@ -181,6 +181,7 @@ namespace ViewportReset
                                 }
                                 else
                                 {
+                                    //freeze the xref layer on all the other viewports
                                     VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                 }
                             }

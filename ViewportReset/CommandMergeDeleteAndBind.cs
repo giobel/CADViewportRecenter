@@ -8,7 +8,7 @@ using System.Linq;
 using Autodesk.AutoCAD.Geometry;
 using System.Collections.Generic;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     public class CommandMergeDeleteAndBind
     {
@@ -173,9 +173,7 @@ namespace ViewportReset
                                     {
                                         viewPort.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                     }
-
-                                
-
+                                    
                                 Point3dCollection vpCorners = CadHelper.GetViewportBoundary(viewPortToUpdate);
 
                                 Matrix3d mt = CadHelper.PaperToModel(viewPortToUpdate);
@@ -202,9 +200,7 @@ namespace ViewportReset
 
 
                             }
-
-
-
+                            
                             //Purge unused layers
                             Helpers.PurgeUnusedLayers(trans, db);
 

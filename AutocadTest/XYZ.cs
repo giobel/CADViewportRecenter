@@ -1,4 +1,4 @@
-﻿namespace AutocadTest
+﻿namespace TristanBatchCommands
 {
     public class XYZ
     {

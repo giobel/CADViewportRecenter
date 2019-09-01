@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     public class MyCommands
     {

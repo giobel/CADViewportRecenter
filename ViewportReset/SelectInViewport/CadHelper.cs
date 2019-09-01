@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.Geometry;
 using System;
 using System.Collections.Generic;
 
-namespace ViewportReset
+namespace TristanAutocadCommands
 {
     //Class to hold Viewport information, obtained
     //in single Transaction
