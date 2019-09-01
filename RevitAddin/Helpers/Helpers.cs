@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     class Helpers
     {
@@ -56,6 +56,14 @@ namespace RevitAddin
 
             return exported;
         }
+
+        public static string RemoveWhitespace(string input)
+        {
+            return new string(input.ToCharArray()
+                .Where(c => !Char.IsWhiteSpace(c))
+                .ToArray());
+        }
+
         public static string PointToString(XYZ point)
         {
 

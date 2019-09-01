@@ -171,8 +171,6 @@ namespace ViewportReset
                                     VP.FreezeLayersInViewport(layerToFreeze.GetEnumerator());
                                 }
                             }
-
-                            
                             
                             //Purge unused layers
                             Helpers.PurgeUnusedLayers(trans, db);

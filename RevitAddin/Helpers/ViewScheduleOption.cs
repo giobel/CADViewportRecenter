@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     public class ViewScheduleOption
     {

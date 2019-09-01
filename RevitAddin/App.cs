@@ -9,7 +9,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 #endregion
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     class App : IExternalApplication
     {
@@ -21,14 +21,14 @@ namespace RevitAddin
 
                 RibbonPanel tools = a.CreateRibbonPanel("Metro", "Tools");
 
-                AddPushButton(tools, "btnSummary", "Check\nSheets", "", "pack://application:,,,/RevitAddin;component/Images/checkSheet.png", "RevitAddin.SheetSummary", "Report sheets without plan views, with overlapping plans or separated plans.");
+                AddPushButton(tools, "btnSummary", "Check\nSheets", "", "pack://application:,,,/TristanRevitAddin;component/Images/checkSheet.png", "TristanRevitAddin.SheetSummary", "Report sheets without plan views, with overlapping plans or separated plans.");
                 
-                AddPushButton(tools, "btnOversized", "Check\nViewport Size", "", "pack://application:,,,/RevitAddin;component/Images/overlap.png", "RevitAddin.FindOversizedViewport", "Report viewports larger than the sheet.");
+                AddPushButton(tools, "btnOversized", "Check\nViewport Size", "", "pack://application:,,,/TristanRevitAddin;component/Images/overlap.png", "TristanRevitAddin.FindOversizedViewport", "Report viewports larger than the sheet.");
                 //Icon made by Swifticons https://www.flaticon.com is licensed by Creative Commons BY 3.0
 
-                AddPushButton(tools, "btnExportSheets", "Export\nSheets", "", "pack://application:,,,/RevitAddin;component/Images/sheets.png", "RevitAddin.ExportSheets", "Export selected sheets to dwg. View plan elements will be temporarily hidden (atm it only processes 1 plan view per sheet).");
+                AddPushButton(tools, "btnExportSheets", "Export\nSheets", "", "pack://application:,,,/TristanRevitAddin;component/Images/sheets.png", "TristanRevitAddin.ExportSheets", "Export selected sheets to dwg. View plan elements can be temporarily hidden.");
 
-                AddPushButton(tools, "btnTristan", "Export\nXrefs+CSV", "", "pack://application:,,,/RevitAddin;component/Images/xref.png", "RevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
+                AddPushButton(tools, "btnTristan", "Export\nXrefs+CSV", "", "pack://application:,,,/TristanRevitAddin;component/Images/xref.png", "TristanRevitAddin.ExportXrefs", "Export selected sheet's plan view to shared coordinates. Creates the csv file for the Autocad script.");
                 
 
 

@@ -13,7 +13,7 @@ using winForm = System.Windows.Forms;
 
 #endregion
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     [Transaction(TransactionMode.Manual)]
     public class DeleteViewports : IExternalCommand
@@ -43,9 +43,9 @@ namespace RevitAddin
                 using (var form = new Form1())
                 {
                     //set the form export settings
-                    form.cboxExportSettingsDataSource = dWGExportOptions;
+                    form.CboxExportSettingsDataSource = dWGExportOptions;
                     //set the form sheets
-                    form.cboxSheetDataSource = viewScheduleOptions;
+                    form.CboxSheetDataSource = viewScheduleOptions;
 
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
@@ -56,13 +56,13 @@ namespace RevitAddin
                         return Result.Cancelled;
                     }
 
-                    string destinationFolder = form.tBoxDestinationFolder;
+                    string destinationFolder = form.TBoxDestinationFolder;
 
                     //string[] sheetNumbers = form.tboxSelectedSheets.Split(' ');
 
-                    string exportSettings = form.tBoxExportSettings;
+                    string exportSettings = form.TBoxExportSettings;
 
-                    DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.tBoxExportSettings);
+                    DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.TBoxExportSettings);
 
                     if (dwgOptions == null)
                     {
@@ -83,9 +83,9 @@ namespace RevitAddin
                     }
 
                     
-                    List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
+                    List<ViewSheet> selectedSheets = form.TboxSelectedSheets;
 
-                    int n = form.tboxSelectedSheets.Count;
+                    int n = form.TboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
 

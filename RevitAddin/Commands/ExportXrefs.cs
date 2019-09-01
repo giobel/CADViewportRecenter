@@ -13,7 +13,7 @@ using winForm = System.Windows.Forms;
 
 #endregion
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     [Transaction(TransactionMode.Manual)]
     public class ExportXrefs : IExternalCommand
@@ -62,9 +62,9 @@ namespace RevitAddin
 
                 using (var form = new Form1())
                 {
-                    form.cboxExportSettingsDataSource = dWGExportOptions;
+                    form.CboxExportSettingsDataSource = dWGExportOptions;
                     //set the form sheets
-                    form.cboxSheetDataSource = viewScheduleOptions;
+                    form.CboxSheetDataSource = viewScheduleOptions;
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
 
@@ -74,14 +74,14 @@ namespace RevitAddin
                         return Result.Cancelled;
                     }
 
-                    string destinationFolder = form.tBoxDestinationFolder;
+                    string destinationFolder = form.TBoxDestinationFolder;
 
                     //string[] sheetNumbers = form.tboxSelectedSheets.Split(' ');
-                    List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
+                    List<ViewSheet> selectedSheets = form.TboxSelectedSheets;
 
-                    string exportSettings = form.tBoxExportSettings;
+                    string exportSettings = form.TBoxExportSettings;
 
-                    int n = form.tboxSelectedSheets.Count;
+                    int n = form.TboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " plans exported...";
                     string caption = "Export xrefs";
 
@@ -130,9 +130,12 @@ namespace RevitAddin
 
                                 if (hasArchOrStrViewports != 0)
                                 {
-                                    //Sheet filename
-                                    string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
+                                    //if the parameter does not exists use the SheetNumber
+                                    string CAADparameter = vs.LookupParameter("CADD File Name").AsString();
 
+                                    //remove white spaces from the name
+                                    string fileName = Helpers.RemoveWhitespace(CAADparameter) ?? vs.SheetNumber;
+                                    
                                     foreach (Viewport vp in viewportViewDict.Keys)
                                     {
                                         View vpPlan = viewportViewDict[vp];

@@ -1,4 +1,4 @@
-﻿namespace RevitAddin
+﻿namespace TristanRevitAddin
 {
     partial class ProgressForm
     {

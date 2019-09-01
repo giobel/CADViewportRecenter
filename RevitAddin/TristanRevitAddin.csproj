@@ -12,8 +12,8 @@
     <ProjectGuid>{467C6553-45F6-4BD7-A3D2-42895AE87955}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RevitAddin</RootNamespace>
-    <AssemblyName>RevitAddin</AssemblyName>
+    <RootNamespace>TristanRevitAddin</RootNamespace>
+    <AssemblyName>TristanRevitAddin</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -64,8 +64,8 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="Commands\ExportKeynotes.cs" />
-    <Compile Include="Commands\ExportXrefs.cs" />
     <Compile Include="Commands\ExportSheets.cs" />
+    <Compile Include="Commands\ExportXrefs.cs" />
     <Compile Include="Commands\SheetSummary.cs" />
     <Compile Include="Commands\FindOversizedViewport.cs" />
     <Compile Include="Forms\Form1.cs">
@@ -103,7 +103,7 @@
     <Resource Include="Images\sheets.png" />
     <Resource Include="Images\xref.png" />
     <Resource Include="Images\overlap.png" />
-    <Content Include="RevitAddin.addin" />
+    <Content Include="TristanRevitAddin.addin" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Forms\Form1.resx">
@@ -121,8 +121,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>copy "$(ProjectDir)bin\debug\*.dll" "$(AppData)\Autodesk\Revit\Addins\2018"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

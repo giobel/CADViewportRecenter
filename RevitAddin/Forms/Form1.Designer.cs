@@ -1,4 +1,4 @@
-﻿namespace RevitAddin
+﻿namespace TristanRevitAddin
 {
     partial class Form1
     {
@@ -41,6 +41,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.labelSelectedSheets = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.cBoxHideViewportContent = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // buttonOk
@@ -70,7 +71,7 @@
             this.textBoxFolder.Name = "textBoxFolder";
             this.textBoxFolder.Size = new System.Drawing.Size(314, 20);
             this.textBoxFolder.TabIndex = 4;
-            this.textBoxFolder.Text = "C:\\Users\\giovanni.brogiolo\\Desktop\\MTCStandards";
+            this.textBoxFolder.Text = "C:\\Temp\\Metro";
             // 
             // label2
             // 
@@ -131,24 +132,40 @@
             this.labelSelectedSheets.AutoSize = true;
             this.labelSelectedSheets.Location = new System.Drawing.Point(9, 141);
             this.labelSelectedSheets.Name = "labelSelectedSheets";
-            this.labelSelectedSheets.Size = new System.Drawing.Size(62, 13);
+            this.labelSelectedSheets.Size = new System.Drawing.Size(13, 13);
             this.labelSelectedSheets.TabIndex = 15;
-            this.labelSelectedSheets.Text = "placeholder";
+            this.labelSelectedSheets.Text = "0";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 187);
+            this.label1.Location = new System.Drawing.Point(6, 207);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(129, 13);
             this.label1.TabIndex = 16;
-            this.label1.Text = "version 0.1.1 21/08/2019";
+            this.label1.Text = "version 0.1.2 03/09/2019";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
+            // 
+            // cBoxHideViewportContent
+            // 
+            this.cBoxHideViewportContent.AutoSize = true;
+            this.cBoxHideViewportContent.Checked = true;
+            this.cBoxHideViewportContent.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cBoxHideViewportContent.Location = new System.Drawing.Point(9, 159);
+            this.cBoxHideViewportContent.Name = "cBoxHideViewportContent";
+            this.cBoxHideViewportContent.Size = new System.Drawing.Size(222, 30);
+            this.cBoxHideViewportContent.TabIndex = 17;
+            this.cBoxHideViewportContent.Text = "Hide Plan Viewport content \r\n(Warning: linked Keynote will be affected)";
+            this.cBoxHideViewportContent.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            this.cBoxHideViewportContent.UseVisualStyleBackColor = true;
+            this.cBoxHideViewportContent.CheckedChanged += new System.EventHandler(this.cBoxHideViewportContent_CheckedChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(432, 208);
+            this.ClientSize = new System.Drawing.Size(432, 229);
+            this.Controls.Add(this.cBoxHideViewportContent);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.labelSelectedSheets);
             this.Controls.Add(this.label4);
@@ -183,5 +200,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label labelSelectedSheets;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox cBoxHideViewportContent;
     }
 }

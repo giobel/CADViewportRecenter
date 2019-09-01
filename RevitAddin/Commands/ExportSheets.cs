@@ -13,7 +13,7 @@ using winForm = System.Windows.Forms;
 
 #endregion
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     [Transaction(TransactionMode.Manual)]
     public class ExportSheets : IExternalCommand
@@ -43,9 +43,9 @@ namespace RevitAddin
                 using (var form = new Form1())
                 {
                     //set the form export settings
-                    form.cboxExportSettingsDataSource = dWGExportOptions;
+                    form.CboxExportSettingsDataSource = dWGExportOptions;
                     //set the form sheets
-                    form.cboxSheetDataSource = viewScheduleOptions;
+                    form.CboxSheetDataSource = viewScheduleOptions;
 
                     //use ShowDialog to show the form as a modal dialog box. 
                     form.ShowDialog();
@@ -56,13 +56,13 @@ namespace RevitAddin
                         return Result.Cancelled;
                     }
 
-                    string destinationFolder = form.tBoxDestinationFolder;
+                    string destinationFolder = form.TBoxDestinationFolder;
 
                     //string[] sheetNumbers = form.tboxSelectedSheets.Split(' ');
 
-                    string exportSettings = form.tBoxExportSettings;
+                    string exportSettings = form.TBoxExportSettings;
 
-                    DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.tBoxExportSettings);
+                    DWGExportOptions dwgOptions = DWGExportOptions.GetPredefinedOptions(doc, form.TBoxExportSettings);
 
                     if (dwgOptions == null)
                     {
@@ -88,9 +88,9 @@ namespace RevitAddin
 
                     categoryToIsolate.Add(groups.get_Item(BuiltInCategory.OST_Loads).Id);
 
-                    List<ViewSheet> selectedSheets = form.tboxSelectedSheets;
+                    List<ViewSheet> selectedSheets = form.TboxSelectedSheets;
 
-                    int n = form.tboxSelectedSheets.Count;
+                    int n = form.TboxSelectedSheets.Count;
                     string s = "{0} of " + n.ToString() + " sheets exported...";
                     string caption = "Export Sheets";
 
@@ -110,9 +110,12 @@ namespace RevitAddin
                                     break;
 
                                 //ViewSheet vs = allSheets.Where(x => x.SheetNumber == sheetNumber).First();
+
+                                //if the parameter does not exists use the SheetNumber
+                                string CAADparameter = vs.LookupParameter("CADD File Name").AsString();
                                 
-                                //if the parameter does not exists, go to catch
-                                string fileName = vs.LookupParameter("CADD File Name").AsString() ?? vs.SheetNumber;
+                                //remove white spaces from the name
+                                string fileName = Helpers.RemoveWhitespace(CAADparameter) ?? vs.SheetNumber;
 
                                 //select all the views placed on the sheet
                                 ISet<ElementId> views = vs.GetAllPlacedViews();
@@ -127,7 +130,10 @@ namespace RevitAddin
 
                                 foreach (View planView in planViewsOnly)
                                 {
-                                    //planView.IsolateCategoriesTemporary(categoryToIsolate);
+                                    if  (form.HideViewportContent)
+                                    {
+                                        planView.IsolateCategoriesTemporary(categoryToIsolate);
+                                    }
                                     hasArchOrStrViewports += 1;   
                                 }
                                 

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using winForm = System.Windows.Forms;
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     [Transaction(TransactionMode.Manual)]
     public class FindOversizedViewport : IExternalCommand

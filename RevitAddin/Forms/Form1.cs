@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using winform = System.Windows.Forms;
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     public partial class Form1 : winform.Form
     {
-        public string tBoxDestinationFolder { get; private set; }
-        public string tBoxExportSettings { get; private set; }
-        public List<Autodesk.Revit.DB.ViewSheet> tboxSelectedSheets { get; private set; }
-        public IList<string> cboxExportSettingsDataSource { get; set; }
-        public List<ViewScheduleOption> cboxSheetDataSource { get; set; }
+        public string TBoxDestinationFolder { get; private set; }
+        public string TBoxExportSettings { get; private set; }
+        public List<Autodesk.Revit.DB.ViewSheet> TboxSelectedSheets { get; private set; }
+        public IList<string> CboxExportSettingsDataSource { get; set; }
+        public List<ViewScheduleOption> CboxSheetDataSource { get; set; }
         private ViewScheduleOption vso = null;
+        public bool HideViewportContent { get; private set; }
 
         public Form1()
         {
@@ -21,17 +22,17 @@ namespace RevitAddin
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            cboxExportSettings.DataSource = cboxExportSettingsDataSource;
-            comboBoxSheetsSchedules.DataSource = cboxSheetDataSource;
+            cboxExportSettings.DataSource = CboxExportSettingsDataSource;
+            comboBoxSheetsSchedules.DataSource = CboxSheetDataSource;
             comboBoxSheetsSchedules.DisplayMember = "Name";
         }
 
         private void ButtonOk_Click(object sender, EventArgs e)
         {
-            tboxSelectedSheets = vso.Views;
-            tBoxExportSettings = cboxExportSettings.SelectedValue.ToString();
-            tBoxDestinationFolder = textBoxFolder.Text;
-
+            TboxSelectedSheets = vso.Views;
+            TBoxExportSettings = cboxExportSettings.SelectedValue.ToString();
+            TBoxDestinationFolder = textBoxFolder.Text;
+            HideViewportContent = cBoxHideViewportContent.Checked;
         }
 
         private void buttonBrowse_Click(object sender, EventArgs e)
@@ -44,6 +45,16 @@ namespace RevitAddin
         {
             vso = comboBoxSheetsSchedules.SelectedItem as ViewScheduleOption;
             labelSelectedSheets.Text = $"{vso.ViewSheetCount.ToString()} Sheets selected";
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+            Autodesk.Revit.UI.TaskDialog.Show("Hey", "What where you trying to do??");
+        }
+
+        private void cBoxHideViewportContent_CheckedChanged(object sender, EventArgs e)
+        {
+            
         }
     }
 }

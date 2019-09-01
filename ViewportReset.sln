@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewportReset", "ViewportReset\ViewportReset.csproj", "{8D0E78BA-3CBA-4FA9-8FE5-6EE380B924D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TristanAutocadCommands", "ViewportReset\TristanAutocadCommands.csproj", "{8D0E78BA-3CBA-4FA9-8FE5-6EE380B924D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevitAddin", "RevitAddin\RevitAddin.csproj", "{467C6553-45F6-4BD7-A3D2-42895AE87955}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TristanRevitAddin", "RevitAddin\TristanRevitAddin.csproj", "{467C6553-45F6-4BD7-A3D2-42895AE87955}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutocadTest", "AutocadTest\AutocadTest.csproj", "{54D6B054-C898-4EE4-8576-E819A475BBF0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TristanBatchCommands", "AutocadTest\TristanBatchCommands.csproj", "{54D6B054-C898-4EE4-8576-E819A475BBF0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

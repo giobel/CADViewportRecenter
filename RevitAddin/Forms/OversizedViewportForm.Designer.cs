@@ -1,4 +1,4 @@
-﻿namespace RevitAddin
+﻿namespace TristanRevitAddin
 {
     partial class OversizedViewportForm
     {
@@ -127,9 +127,9 @@
             this.labelSelectedSheets.AutoSize = true;
             this.labelSelectedSheets.Location = new System.Drawing.Point(242, 30);
             this.labelSelectedSheets.Name = "labelSelectedSheets";
-            this.labelSelectedSheets.Size = new System.Drawing.Size(62, 13);
+            this.labelSelectedSheets.Size = new System.Drawing.Size(13, 13);
             this.labelSelectedSheets.TabIndex = 26;
-            this.labelSelectedSheets.Text = "placeholder";
+            this.labelSelectedSheets.Text = "0";
             // 
             // OversizedViewportForm
             // 

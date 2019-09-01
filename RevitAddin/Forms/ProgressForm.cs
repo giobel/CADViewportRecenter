@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace RevitAddin
+namespace TristanRevitAddin
 {
     public partial class ProgressForm : Form
     {
