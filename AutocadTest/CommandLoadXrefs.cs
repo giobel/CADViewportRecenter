@@ -13,7 +13,6 @@ namespace TristanBatchCommands
 {
     public class CommandLoadXrefs
     {
-        //http://drive-cad-with-code.blogspot.com/2014/03/selecting-entities-in-modelspace.html
 
         [CommandMethod("LOADXREFS")]
         public void LoadXrefs()
@@ -26,14 +25,9 @@ namespace TristanBatchCommands
             lm.CurrentLayout = "Layout1";
 
             Database db = doc.Database;
-            Database workingDb = HostApplicationServices.WorkingDatabase;
 
             try
             {
-
-
-                HostApplicationServices.WorkingDatabase = db;
-
 
                 string dwgName = Path.GetFileNameWithoutExtension(doc.Name);
 
@@ -45,12 +39,19 @@ namespace TristanBatchCommands
                 //get document name
                 ed.WriteMessage("\n======================== Dwg Name: " + doc.Name + "\n");
 
+                //to bind after have been loaded
+                List<string> xrefsToBind = new List<string>();
 
                 foreach (SheetObject sheetObject in sheetObjects)
                 {
                     ed.WriteMessage("======================== Xref(s): " + sheetObject.xrefName + "\n");
 
                     string layerName = $"0-{sheetObject.xrefName}";
+
+                    if (sheetObject.group == "bind")
+                    {
+                        xrefsToBind.Add(sheetObject.xrefName);
+                    }
 
                     using (Transaction trans = db.TransactionManager.StartTransaction())
                     {
@@ -94,18 +95,32 @@ namespace TristanBatchCommands
                         }
 
                         #endregion
+
+
                         trans.Commit();
                     }//close transaction
+
+
                 }
 
-                ed.WriteMessage($"======================== Check xref group for binding\n");
-                if (sheetObjects.First().group == "bind")
+                ed.WriteMessage($"======================== Check if the xref has to be bound\n");
+                
+                if (xrefsToBind.Count > 0)
                 {
-                    Helpers.BindXrefs(db);
-                    ed.WriteMessage($"======================== xrefs binded\n");
+                    foreach (string xrefName in xrefsToBind)
+                    {
+                        //it seems nested xrefs are moved back to origin when binded...
+                        //Helpers.BindXrefs(db);
+                        //try this:
+                        ed.Command("-xref", "bind", xrefName, " ");
+                        ed.WriteMessage($"======================== xrefs binded\n");
+                    }
                 }
-
+                
+                ed.WriteMessage($"======================== Check xref group for binding\n");
+                
                 ed.WriteMessage("Save file \n");
+
                 db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
 
                 ed.WriteMessage("done");
@@ -113,7 +128,6 @@ namespace TristanBatchCommands
             catch { }
             finally
             {
-                HostApplicationServices.WorkingDatabase = workingDb;
             }
         }
 
