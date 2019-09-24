@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Application MxRevitAddin</Name>
+    <Assembly>MxRevitAddin.dll</Assembly>
+    <FullClassName>MxRevitAddin.App</FullClassName>
+    <ClientId>2855b5c1-cde9-46a8-888a-db4aaa44e4e3</ClientId>
+    <VendorId>com.typepad.thebuildingcoder</VendorId>
+    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>
